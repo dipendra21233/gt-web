@@ -10,10 +10,10 @@ import {
   showErrorToast,
   showSuccessToast,
 } from '@/components/web/core/Toast/CustomToast'
-import { addCouponDetails } from '@/store/actions/coupon.action'
+import { useAddCouponDetailsMutation } from '@/hooks/useMutations'
 import { Field, FieldType } from '@/types/module/authModule'
 import { labelValueProps } from '@/types/module/selectInputFieldModule'
-import { MainStoreType } from '@/types/store/reducers/main.reducers'
+import { AddCouponFormValues } from '@/types/module/adminModules/couponModule'
 import {
   airLineTerminalOptions,
   carrierOptions,
@@ -22,21 +22,57 @@ import {
 import { appRoutes } from '@/utils/routes'
 import { calculateFlightDuration, formatDuration } from '@/utils/timeUtils'
 import { translation } from '@/utils/translation'
-import { useFormik } from 'formik'
+import { addCouponValidationSchema } from '@/utils/validationSchemas'
+import { yupResolver } from '@hookform/resolvers/yup'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useCallback, useEffect, useMemo } from 'react'
+import { useForm } from 'react-hook-form'
 import { Box } from 'theme-ui'
+import * as yup from 'yup'
 
 export const AddCouponDetails = () => {
   const router = useRouter()
-  const dispatch = useDispatch()
-  const { loading } = useSelector((state: MainStoreType) => state.couponData)
+  const addCouponMutation = useAddCouponDetailsMutation()
 
-  const InitialValues = {
+  // Create a local validation schema that matches AddCouponFormValues exactly
+  const validationSchema = yup.object().shape({
+    origin: yup.string().required('Origin is required'),
+    destination: yup.string().required('Destination is required'),
+    journeyType: yup.string().oneOf(['Domestic', 'International']).required('Journey Type is required'),
+    carrier: yup.string().required('Carrier is required'),
+    flightNumber: yup.string().required('Flight Number is required'),
+    flightClass: yup.string().required('Flight Class is required'),
+    depTime: yup.string().required('Dep. Time is required'),
+    arrTime: yup.string().required('Arr. Time is required'),
+    totalDuration: yup.string().required('Total Duration is required'),
+    availableSeats: yup.string().required('Available Seats is required'),
+    startJourneyDate: yup.string().required('Start Journey Date is required'),
+    endJourneyDate: yup.string().required('End Journey Date is required'),
+    adultTax: yup.string().required('Adult Tax is required'),
+    childTax: yup.string().required('Child Tax is required'),
+    infantTax: yup.string().required('Infant Tax is required'),
+    totalAmount: yup.string().required('Total Amount is required'),
+    sectorDetails: yup.object().shape({
+      carrier: yup.string().required('Carrier is required'),
+      flightNumber: yup.string().required('Flight Number is required'),
+      flightClass: yup.string().required('Class Type is required'),
+      flightType: yup.string().oneOf(['Onward', 'Return']).required('Flight Type is required'),
+      depTime: yup.string().required('Dep. Time is required'),
+      arrTime: yup.string().required('Arr. Time is required'),
+      origin: yup.string().required('Origin is required'),
+      destination: yup.string().required('Destination is required'),
+      startTerminal: yup.string().required('Start Terminal is required'),
+      endTerminal: yup.string().required('End Terminal is required'),
+      refundable: yup.string().oneOf(['Refundable', 'Non-Refundable']).required('Refundable is required'),
+      depDate: yup.string().required('Dep. Date is required'),
+      dayChange: yup.string().oneOf(['yes', 'no']).required('Day Change is required'),
+    }),
+  })
+
+  const defaultValues: AddCouponFormValues = {
     origin: '',
     destination: '',
-    journeyType: '',
+    journeyType: 'Domestic',
     carrier: '',
     flightNumber: '',
     flightClass: '',
@@ -50,492 +86,501 @@ export const AddCouponDetails = () => {
     childTax: '0',
     infantTax: '0',
     totalAmount: '0',
-
     sectorDetails: {
       carrier: '',
       flightNumber: '',
       flightClass: '',
-      flightType: '',
+      flightType: 'Onward',
       depTime: '',
       arrTime: '',
       origin: '',
       destination: '',
       startTerminal: '',
       endTerminal: '',
-      refundable: '',
+      refundable: 'Refundable',
       depDate: '',
       dayChange: 'yes',
     },
   }
 
-  const formik = useFormik({
-    initialValues: InitialValues,
-    enableReinitialize: true,
-    // validationSchema: addCouponValidationSchema,
-    onSubmit: (values) => {
-      const {
-        origin,
-        destination,
-        journeyType,
-        carrier,
-        flightNumber,
-        flightClass,
-        depTime,
-        arrTime,
-        totalDuration,
-        availableSeats,
-        startJourneyDate,
-        endJourneyDate,
-        adultTax,
-        childTax,
-        infantTax,
-        totalAmount,
-        sectorDetails,
-      } = values
-
-      const payload = {
-        seriesName: 'Winter Promo 2025',
-        origin: origin,
-        destination: destination,
-        journeyType: journeyType,
-        carrier: carrier,
-        flightNumber: flightNumber,
-        classType: flightClass,
-        depTime: depTime,
-        arrTime: arrTime,
-        totalDuration: totalDuration,
-        availableSeats: parseInt(availableSeats),
-        startJourneyDate: startJourneyDate,
-        endJourneyDate: endJourneyDate,
-        adultTax: parseInt(adultTax),
-        childTax: parseInt(childTax),
-        infantTax: parseInt(infantTax),
-        totalAmount: parseInt(totalAmount),
-        credentials: 'include',
-        couponSectors: [
-          {
-            carrier: sectorDetails.carrier,
-            flightNumber: sectorDetails.flightNumber,
-            classType: sectorDetails.flightClass,
-            flightType: sectorDetails.flightType,
-            depTime: sectorDetails.depTime,
-            arrTime: sectorDetails.arrTime,
-            origin: sectorDetails.origin,
-            destination: sectorDetails.destination,
-            startTerminal: sectorDetails.startTerminal,
-            endTerminal: sectorDetails.endTerminal,
-            refundable: sectorDetails.refundable === 'Refundable',
-            depDate: sectorDetails.depDate,
-            arrDate: sectorDetails.arrTime,
-            dayChange: sectorDetails.dayChange === 'yes',
-          },
-        ],
-      }
-      dispatch(
-        addCouponDetails(payload, (success: boolean) => {
-          if (success) {
-            showSuccessToast(translation?.COUPON_ADDED_SUCCESS)
-            router.push(appRoutes.surfCoupons)
-          } else {
-            showErrorToast(translation?.COUPON_ADDED_FAILED)
-          }
-        })
-      )
-    },
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    clearErrors,
+    formState: { errors, touchedFields },
+    trigger,
+  } = useForm<AddCouponFormValues>({
+    resolver: yupResolver(validationSchema),
+    defaultValues,
+    mode: 'onBlur', // Changed from 'onChange' to 'onBlur' for better performance
   })
 
-  const {
-    handleBlur,
-    values,
-    errors,
-    touched,
-    setFieldValue,
-    setFieldTouched,
-    handleSubmit,
-  } = formik
+  const watchedValues = watch()
+
+  // Optimized field change handlers using useCallback
+  const createFieldChangeHandler = useCallback((fieldName: keyof AddCouponFormValues) => {
+    return (val: any) => {
+      setValue(fieldName, val)
+      clearErrors(fieldName)
+    }
+  }, [setValue, clearErrors])
+
+  const createNestedFieldChangeHandler = useCallback((fieldPath: string) => {
+    return (val: any) => {
+      setValue(fieldPath as any, val)
+      clearErrors(fieldPath as any)
+    }
+  }, [setValue, clearErrors])
+
+  // Calculate total duration when depTime or arrTime changes
   useEffect(() => {
-    if (values.depTime && values.arrTime) {
-      const result = calculateFlightDuration(values.depTime, values.arrTime)
+    if (watchedValues.depTime && watchedValues.arrTime) {
+      const result = calculateFlightDuration(watchedValues.depTime, watchedValues.arrTime)
       const readableDuration = formatDuration(result.hours, result.minutes)
-      setFieldValue(
+      setValue(
         'totalDuration',
         `${readableDuration} (${result.formattedDuration})`
       )
     } else {
-      setFieldValue('totalDuration', '')
+      setValue('totalDuration', '')
     }
-  }, [values.depTime, values.arrTime, setFieldValue])
+  }, [watchedValues.depTime, watchedValues.arrTime, setValue])
 
-  const couponDetailsFields: Field[] = [
+  const onSubmit = (values: AddCouponFormValues) => {
+    const {
+      origin,
+      destination,
+      journeyType,
+      carrier,
+      flightNumber,
+      flightClass,
+      depTime,
+      arrTime,
+      totalDuration,
+      availableSeats,
+      startJourneyDate,
+      endJourneyDate,
+      adultTax,
+      childTax,
+      infantTax,
+      totalAmount,
+      sectorDetails,
+    } = values
+
+    const payload = {
+      seriesName: 'Winter Promo 2025',
+      origin: origin,
+      destination: destination,
+      journeyType: journeyType,
+      carrier: carrier,
+      flightNumber: flightNumber,
+      classType: flightClass,
+      depTime: depTime,
+      arrTime: arrTime,
+      totalDuration: totalDuration,
+      availableSeats: parseInt(availableSeats),
+      startJourneyDate: startJourneyDate,
+      endJourneyDate: endJourneyDate,
+      adultTax: parseInt(adultTax),
+      childTax: parseInt(childTax),
+      infantTax: parseInt(infantTax),
+      totalAmount: parseInt(totalAmount),
+      credentials: 'include',
+      couponSectors: [
+        {
+          carrier: sectorDetails.carrier,
+          flightNumber: sectorDetails.flightNumber,
+          classType: sectorDetails.flightClass,
+          flightType: sectorDetails.flightType,
+          depTime: sectorDetails.depTime,
+          arrTime: sectorDetails.arrTime,
+          origin: sectorDetails.origin,
+          destination: sectorDetails.destination,
+          startTerminal: sectorDetails.startTerminal,
+          endTerminal: sectorDetails.endTerminal,
+          refundable: sectorDetails.refundable === 'Refundable',
+          depDate: sectorDetails.depDate,
+          arrDate: sectorDetails.arrTime,
+          dayChange: sectorDetails.dayChange === 'yes',
+        },
+      ],
+    }
+
+    addCouponMutation.mutate(payload, {
+      onSuccess: () => {
+        showSuccessToast(translation?.COUPON_ADDED_SUCCESS)
+        router.push(appRoutes.surfCoupons)
+      },
+      onError: () => {
+        showErrorToast(translation?.COUPON_ADDED_FAILED)
+      },
+    })
+  }
+
+  const couponDetailsFields: Field[] = useMemo(() => [
     {
       name: 'origin',
       label: 'Origin',
-      value: values.origin,
+      value: watchedValues.origin,
       placeholder: 'Enter Origin',
       type: FieldType.TEXT_INPUT_FIELD,
       isShowRequired: true,
-      onChange: (val) => setFieldValue('origin', val),
-      error: errors.origin,
-      touched: touched.origin,
+      onChange: createFieldChangeHandler('origin'),
+      error: errors.origin?.message,
+      touched: touchedFields.origin,
     },
     {
       name: 'destination',
       label: 'Destination',
-      value: values.destination,
+      value: watchedValues.destination,
       placeholder: 'Enter Destination',
       type: FieldType.TEXT_INPUT_FIELD,
       isShowRequired: true,
-      onChange: (val) => setFieldValue('destination', val),
-      error: errors.destination,
-      touched: touched.destination,
+      onChange: createFieldChangeHandler('destination'),
+      error: errors.destination?.message,
+      touched: touchedFields.destination,
     },
     {
       name: 'journeyType',
       label: 'Journey Type',
-      value: values.journeyType,
+      value: watchedValues.journeyType,
       options: ['Domestic', 'International'],
       placeholder: 'Select Journey Type',
       type: FieldType.SELECT_INPUT_FIELD,
       isShowRequired: true,
-      onChange: (val) => setFieldValue('journeyType', val),
-      error: errors.journeyType,
-      touched: touched.journeyType,
-      onBlur: () => {
-        setFieldTouched('journeyType', true)
+      onChange: (val) => {
+        setValue('journeyType', val as 'Domestic' | 'International')
+        clearErrors('journeyType')
       },
+      error: errors.journeyType?.message,
+      touched: touchedFields.journeyType,
+      onBlur: () => trigger('journeyType'),
     },
     {
       name: 'carrier',
       label: 'Carrier',
-      value: values.carrier,
+      value: watchedValues.carrier,
       options: carrierOptions as labelValueProps[],
       placeholder: 'Select Carrier',
       type: FieldType.SELECT_INPUT_FIELD,
       isShowRequired: true,
-      onChange: (val) => setFieldValue('carrier', val),
-      error: errors.carrier,
-      touched: touched.carrier,
-      onBlur: () => {
-        setFieldTouched('carrier', true)
-      },
+      onChange: createFieldChangeHandler('carrier'),
+      error: errors.carrier?.message,
+      touched: touchedFields.carrier,
+      onBlur: () => trigger('carrier'),
     },
     {
       name: 'flightNumber',
       label: 'Flight Number',
-      value: values.flightNumber,
+      value: watchedValues.flightNumber,
       placeholder: 'Enter Flight Number',
       type: FieldType.TEXT_INPUT_FIELD,
       isShowRequired: true,
-      onChange: (val) => setFieldValue('flightNumber', val),
-      error: errors.flightNumber,
-      touched: touched.flightNumber,
+      onChange: createFieldChangeHandler('flightNumber'),
+      error: errors.flightNumber?.message,
+      touched: touchedFields.flightNumber,
     },
     {
       name: 'flightClass',
       label: 'Class',
-      value: values.flightClass,
+      value: watchedValues.flightClass,
       placeholder: 'Select Class',
       type: FieldType.SELECT_INPUT_FIELD,
       options: travelClassesData,
       isShowRequired: true,
-      onChange: (val) => setFieldValue('flightClass', val),
-      error: errors.flightClass,
-      touched: touched.flightClass,
-      onBlur: () => {
-        setFieldTouched('flightClass', true)
-      },
+      onChange: createFieldChangeHandler('flightClass'),
+      error: errors.flightClass?.message,
+      touched: touchedFields.flightClass,
+      onBlur: () => trigger('flightClass'),
     },
     {
       name: 'depTime',
       label: 'Dep. Time (HH:MM)',
-      value: values.depTime,
+      value: watchedValues.depTime,
       placeholder: '--:--',
-      type: FieldType.TIME_INPUT_FIELD, // Changed from TEXT_INPUT_FIELD
+      type: FieldType.TIME_INPUT_FIELD,
       isShowRequired: true,
-      onChange: (val) => setFieldValue('depTime', val),
-      error: errors.depTime,
-      touched: touched.depTime,
+      onChange: createFieldChangeHandler('depTime'),
+      error: errors.depTime?.message,
+      touched: touchedFields.depTime,
     },
     {
       name: 'arrTime',
       label: 'Arr. Time (HH:MM)',
-      value: values.arrTime,
+      value: watchedValues.arrTime,
       placeholder: '--:--',
-      type: FieldType.TIME_INPUT_FIELD, // Changed from TEXT_INPUT_FIELD
+      type: FieldType.TIME_INPUT_FIELD,
       isShowRequired: true,
-      onChange: (val) => setFieldValue('arrTime', val),
-      error: errors.arrTime,
-      touched: touched.arrTime,
+      onChange: createFieldChangeHandler('arrTime'),
+      error: errors.arrTime?.message,
+      touched: touchedFields.arrTime,
     },
     {
       name: 'totalDuration',
       label: 'Total Duration',
-      value: values.totalDuration,
+      value: watchedValues.totalDuration,
       placeholder: 'Auto-calculated',
       type: FieldType.TEXT_INPUT_FIELD,
       isShowRequired: true,
       onChange: () => {}, // Read-only
-      error: errors.totalDuration,
-      touched: touched.totalDuration,
+      error: errors.totalDuration?.message,
+      touched: touchedFields.totalDuration,
     },
     {
       name: 'availableSeats',
       label: 'Available Seats',
-      value: values.availableSeats,
+      value: watchedValues.availableSeats,
       placeholder: 'e.g. 50',
       type: FieldType.TEXT_INPUT_FIELD,
       isShowRequired: true,
-      onChange: (val) => setFieldValue('availableSeats', val),
-      error: errors.availableSeats,
-      touched: touched.availableSeats,
+      onChange: createFieldChangeHandler('availableSeats'),
+      error: errors.availableSeats?.message,
+      touched: touchedFields.availableSeats,
     },
-  ]
+  ], [watchedValues, errors, touchedFields, createFieldChangeHandler, setValue, clearErrors, trigger])
 
-  const validityFields: Field[] = [
+  const validityFields: Field[] = useMemo(() => [
     {
       name: 'startJourneyDate',
       label: 'Start Journey Date',
-      value: values.startJourneyDate,
+      value: watchedValues.startJourneyDate,
       placeholder: 'YYYY-MM-DD',
       type: FieldType.DATE_INPUT_FIELD,
       isShowRequired: true,
-      onChange: (val) => setFieldValue('startJourneyDate', val),
-      error: errors.startJourneyDate,
-      touched: touched.startJourneyDate,
+      onChange: createFieldChangeHandler('startJourneyDate'),
+      error: errors.startJourneyDate?.message,
+      touched: touchedFields.startJourneyDate,
     },
     {
       name: 'endJourneyDate',
       label: 'End Journey Date',
-      value: values.endJourneyDate,
+      value: watchedValues.endJourneyDate,
       placeholder: 'YYYY-MM-DD',
       type: FieldType.DATE_INPUT_FIELD,
       isShowRequired: true,
-      onChange: (val) => setFieldValue('endJourneyDate', val),
-      error: errors.endJourneyDate,
-      touched: touched.endJourneyDate,
+      onChange: createFieldChangeHandler('endJourneyDate'),
+      error: errors.endJourneyDate?.message,
+      touched: touchedFields.endJourneyDate,
     },
-  ]
+  ], [watchedValues, errors, touchedFields, createFieldChangeHandler])
 
-  const fareDetailsFields: Field[] = [
+  const fareDetailsFields: Field[] = useMemo(() => [
     {
       name: 'adultTax',
       label: 'Adult Tax',
-      value: values.adultTax,
+      value: watchedValues.adultTax,
       placeholder: '0',
       type: FieldType.TEXT_INPUT_FIELD,
-      onChange: (val) => setFieldValue('adultTax', val),
+      onChange: createFieldChangeHandler('adultTax'),
       isShowRequired: true,
-      error: errors.adultTax,
-      touched: touched.adultTax,
+      error: errors.adultTax?.message,
+      touched: touchedFields.adultTax,
     },
     {
       name: 'totalAmount',
       label: 'Total Amount',
-      value: values.totalAmount,
+      value: watchedValues.totalAmount,
       placeholder: '0',
       type: FieldType.TEXT_INPUT_FIELD,
-      onChange: (val) => setFieldValue('totalAmount', val),
+      onChange: createFieldChangeHandler('totalAmount'),
       isShowRequired: true,
-      error: errors.totalAmount,
-      touched: touched.totalAmount,
+      error: errors.totalAmount?.message,
+      touched: touchedFields.totalAmount,
     },
     {
       name: 'childTax',
       label: 'Child Tax',
-      value: values.childTax,
+      value: watchedValues.childTax,
       placeholder: '0',
       type: FieldType.TEXT_INPUT_FIELD,
-      onChange: (val) => setFieldValue('childTax', val),
+      onChange: createFieldChangeHandler('childTax'),
       isShowRequired: true,
-      error: errors.childTax,
-      touched: touched.childTax,
+      error: errors.childTax?.message,
+      touched: touchedFields.childTax,
     },
     {
       name: 'infantTax',
       label: 'Infant Tax',
-      value: values.infantTax,
+      value: watchedValues.infantTax,
       placeholder: '0',
       type: FieldType.TEXT_INPUT_FIELD,
-      onChange: (val) => setFieldValue('infantTax', val),
+      onChange: createFieldChangeHandler('infantTax'),
       isShowRequired: true,
-      error: errors.infantTax,
-      touched: touched.infantTax,
+      error: errors.infantTax?.message,
+      touched: touchedFields.infantTax,
     },
-  ]
+  ], [watchedValues, errors, touchedFields, createFieldChangeHandler])
 
-  const sectorDetailsFields: Field[] = [
+  const sectorDetailsFields: Field[] = useMemo(() => [
     {
       name: 'sectorDetails.carrier',
       label: 'Carrier',
-      value: values.sectorDetails.carrier,
+      value: watchedValues.sectorDetails.carrier,
       placeholder: 'Select Carrier',
       type: FieldType.SELECT_INPUT_FIELD,
       options: carrierOptions as labelValueProps[],
-      onChange: (val) => setFieldValue('sectorDetails.carrier', val),
-      error: errors?.sectorDetails?.carrier,
-      touched: touched?.sectorDetails?.carrier,
+      onChange: createNestedFieldChangeHandler('sectorDetails.carrier'),
+      error: errors?.sectorDetails?.carrier?.message,
+      touched: touchedFields?.sectorDetails?.carrier,
       isShowRequired: true,
-      onBlur: () => {
-        setFieldTouched('sectorDetails.carrier', true)
-      },
+      onBlur: () => trigger('sectorDetails.carrier'),
     },
     {
       name: 'sectorDetails.flightNumber',
       label: 'Flight Number',
-      value: values.sectorDetails.flightNumber,
+      value: watchedValues.sectorDetails.flightNumber,
       placeholder: 'Enter Flight Number',
       type: FieldType.TEXT_INPUT_FIELD,
-      onChange: (val) => setFieldValue('sectorDetails.flightNumber', val),
-      error: errors?.sectorDetails?.flightNumber,
-      touched: touched?.sectorDetails?.flightNumber,
+      onChange: createNestedFieldChangeHandler('sectorDetails.flightNumber'),
+      error: errors?.sectorDetails?.flightNumber?.message,
+      touched: touchedFields?.sectorDetails?.flightNumber,
       isShowRequired: true,
     },
     {
       name: 'sectorDetails.flightClass',
       label: 'Class',
-      value: values.sectorDetails.flightClass,
+      value: watchedValues.sectorDetails.flightClass,
       placeholder: 'Select Class',
       type: FieldType.SELECT_INPUT_FIELD,
       options: travelClassesData,
-      onChange: (val) => setFieldValue('sectorDetails.flightClass', val),
-      error: errors?.sectorDetails?.flightClass,
-      touched: touched?.sectorDetails?.flightClass,
+      onChange: createNestedFieldChangeHandler('sectorDetails.flightClass'),
+      error: errors?.sectorDetails?.flightClass?.message,
+      touched: touchedFields?.sectorDetails?.flightClass,
       isShowRequired: true,
-      onBlur: () => {
-        setFieldTouched('sectorDetails.flightClass', true)
-      },
+      onBlur: () => trigger('sectorDetails.flightClass'),
     },
     {
       name: 'sectorDetails.flightType',
       label: 'Flight Type',
-      value: values.sectorDetails.flightType || 'Onward',
+      value: watchedValues.sectorDetails.flightType || 'Onward',
       options: ['Onward', 'Return'],
       placeholder: 'Select Flight Type',
       type: FieldType.SELECT_INPUT_FIELD,
-      onChange: (val) => setFieldValue('sectorDetails.flightType', val),
-      error: errors?.sectorDetails?.flightType,
-      touched: touched?.sectorDetails?.flightType,
-      isShowRequired: true,
-      onBlur: () => {
-        setFieldTouched('sectorDetails.flightType', true)
+      onChange: (val) => {
+        setValue('sectorDetails.flightType', val as 'Onward' | 'Return')
+        clearErrors('sectorDetails.flightType')
       },
+      error: errors?.sectorDetails?.flightType?.message,
+      touched: touchedFields?.sectorDetails?.flightType,
+      isShowRequired: true,
+      onBlur: () => trigger('sectorDetails.flightType'),
     },
     {
       name: 'sectorDetails.depTime',
       label: 'Dep. Time',
-      value: values.sectorDetails.depTime,
+      value: watchedValues.sectorDetails.depTime,
       placeholder: '--:--',
       type: FieldType.TIME_INPUT_FIELD,
-      onChange: (val) => setFieldValue('sectorDetails.depTime', val),
-      error: errors?.sectorDetails?.depTime,
-      touched: touched?.sectorDetails?.depTime,
+      onChange: createNestedFieldChangeHandler('sectorDetails.depTime'),
+      error: errors?.sectorDetails?.depTime?.message,
+      touched: touchedFields?.sectorDetails?.depTime,
       isShowRequired: true,
     },
     {
       name: 'sectorDetails.arrTime',
       label: 'Arr. Time',
-      value: values.sectorDetails.arrTime,
+      value: watchedValues.sectorDetails.arrTime,
       placeholder: '--:--',
       type: FieldType.TIME_INPUT_FIELD,
-      onChange: (val) => setFieldValue('sectorDetails.arrTime', val),
-      error: errors?.sectorDetails?.arrTime,
-      touched: touched?.sectorDetails?.arrTime,
+      onChange: createNestedFieldChangeHandler('sectorDetails.arrTime'),
+      error: errors?.sectorDetails?.arrTime?.message,
+      touched: touchedFields?.sectorDetails?.arrTime,
       isShowRequired: true,
     },
     {
       name: 'sectorDetails.origin',
       label: 'Origin',
-      value: values.sectorDetails.origin,
+      value: watchedValues.sectorDetails.origin,
       placeholder: 'Enter Origin',
       type: FieldType.TEXT_INPUT_FIELD,
-      onChange: (val) => setFieldValue('sectorDetails.origin', val),
-      error: errors?.sectorDetails?.origin,
-      touched: touched?.sectorDetails?.origin,
+      onChange: createNestedFieldChangeHandler('sectorDetails.origin'),
+      error: errors?.sectorDetails?.origin?.message,
+      touched: touchedFields?.sectorDetails?.origin,
       isShowRequired: true,
     },
     {
       name: 'sectorDetails.destination',
       label: 'Destination',
-      value: values.sectorDetails.destination,
+      value: watchedValues.sectorDetails.destination,
       placeholder: 'Enter Destination',
       type: FieldType.TEXT_INPUT_FIELD,
-      onChange: (val) => setFieldValue('sectorDetails.destination', val),
-      error: errors?.sectorDetails?.destination,
-      touched: touched?.sectorDetails?.destination,
+      onChange: createNestedFieldChangeHandler('sectorDetails.destination'),
+      error: errors?.sectorDetails?.destination?.message,
+      touched: touchedFields?.sectorDetails?.destination,
       isShowRequired: true,
     },
     {
       name: 'sectorDetails.startTerminal',
       label: 'Start Terminal',
-      value: values.sectorDetails.startTerminal,
+      value: watchedValues.sectorDetails.startTerminal,
       placeholder: 'Select Start Terminal',
       type: FieldType.SELECT_INPUT_FIELD,
       options: airLineTerminalOptions,
-      onChange: (val) => setFieldValue('sectorDetails.startTerminal', val),
-      error: errors?.sectorDetails?.startTerminal,
-      touched: touched?.sectorDetails?.startTerminal,
+      onChange: createNestedFieldChangeHandler('sectorDetails.startTerminal'),
+      error: errors?.sectorDetails?.startTerminal?.message,
+      touched: touchedFields?.sectorDetails?.startTerminal,
       isShowRequired: true,
-      onBlur: () => {
-        setFieldTouched('sectorDetails.startTerminal', true)
-      },
+      onBlur: () => trigger('sectorDetails.startTerminal'),
     },
     {
       name: 'sectorDetails.endTerminal',
       label: 'End Terminal',
-      value: values.sectorDetails.endTerminal,
+      value: watchedValues.sectorDetails.endTerminal,
       placeholder: 'Select End Terminal',
       type: FieldType.SELECT_INPUT_FIELD,
       options: airLineTerminalOptions,
-      onChange: (val) => setFieldValue('sectorDetails.endTerminal', val),
-      error: errors?.sectorDetails?.endTerminal,
-      touched: touched?.sectorDetails?.endTerminal,
+      onChange: createNestedFieldChangeHandler('sectorDetails.endTerminal'),
+      error: errors?.sectorDetails?.endTerminal?.message,
+      touched: touchedFields?.sectorDetails?.endTerminal,
       isShowRequired: true,
-      onBlur: () => {
-        setFieldTouched('sectorDetails.endTerminal', true)
-      },
+      onBlur: () => trigger('sectorDetails.endTerminal'),
     },
     {
       name: 'sectorDetails.refundable',
       label: 'Refundable',
-      value: values.sectorDetails.refundable || 'Refundable',
+      value: watchedValues.sectorDetails.refundable || 'Refundable',
       options: ['Refundable', 'Non-Refundable'],
       placeholder: 'Select Refund Option',
       type: FieldType.SELECT_INPUT_FIELD,
-      onChange: (val) => setFieldValue('sectorDetails.refundable', val),
-      error: errors?.sectorDetails?.refundable,
-      touched: touched?.sectorDetails?.refundable,
-      isShowRequired: true,
-      onBlur: () => {
-        setFieldTouched('sectorDetails.refundable', true)
+      onChange: (val) => {
+        setValue('sectorDetails.refundable', val as 'Refundable' | 'Non-Refundable')
+        clearErrors('sectorDetails.refundable')
       },
+      error: errors?.sectorDetails?.refundable?.message,
+      touched: touchedFields?.sectorDetails?.refundable,
+      isShowRequired: true,
+      onBlur: () => trigger('sectorDetails.refundable'),
     },
     {
       name: 'sectorDetails.depDate',
       label: 'Dep. Date',
-      value: values.sectorDetails.depDate,
+      value: watchedValues.sectorDetails.depDate,
       placeholder: 'YYYY-MM-DD',
       type: FieldType.TEXT_INPUT_FIELD,
-      onChange: (val) => setFieldValue('sectorDetails.depDate', val),
-      error: errors?.sectorDetails?.depDate,
-      touched: touched?.sectorDetails?.depDate,
+      onChange: createNestedFieldChangeHandler('sectorDetails.depDate'),
+      error: errors?.sectorDetails?.depDate?.message,
+      touched: touchedFields?.sectorDetails?.depDate,
       isShowRequired: true,
     },
     {
       name: 'sectorDetails.dayChange',
       label: 'Day Change',
-      value: values.sectorDetails.dayChange || 'yes',
+      value: watchedValues.sectorDetails.dayChange || 'yes',
       options: ['yes', 'no'],
       placeholder: 'Select Day Change',
       type: FieldType.SELECT_INPUT_FIELD,
-      onChange: (val) => setFieldValue('sectorDetails.dayChange', val),
-      error: errors?.sectorDetails?.dayChange,
-      touched: touched?.sectorDetails?.dayChange,
-      isShowRequired: true,
-      onBlur: () => {
-        setFieldTouched('sectorDetails.dayChange', true)
+      onChange: (val) => {
+        setValue('sectorDetails.dayChange', val as 'yes' | 'no')
+        clearErrors('sectorDetails.dayChange')
       },
+      error: errors?.sectorDetails?.dayChange?.message,
+      touched: touchedFields?.sectorDetails?.dayChange,
+      isShowRequired: true,
+      onBlur: () => trigger('sectorDetails.dayChange'),
     },
-  ]
+  ], [watchedValues, errors, touchedFields, createNestedFieldChangeHandler, setValue, clearErrors, trigger])
 
   const renderField = useCallback(
     (field: Field) => {
@@ -574,7 +619,6 @@ export const AddCouponDetails = () => {
             value={field.value}
             placeholder={field.placeholder}
             onChange={(time) => field.onChange?.(time)}
-            onBlur={handleBlur}
             errors={field.error}
             touched={field.touched}
             wrapperClass="mt-0 w-[100%]"
@@ -591,7 +635,6 @@ export const AddCouponDetails = () => {
             value={field.value}
             placeholder={field.placeholder}
             onChange={(date) => field.onChange?.(date)}
-            onBlur={handleBlur}
             errors={field.error}
             id={`date-input-${field.name}`}
             touched={field.touched}
@@ -615,7 +658,6 @@ export const AddCouponDetails = () => {
           onFocus={() => {
             field.onFocus?.()
           }}
-          onBlur={handleBlur}
           manualErrorSX={{
             display: 'block',
             textAlign: 'start',
@@ -630,7 +672,7 @@ export const AddCouponDetails = () => {
         />
       )
     },
-    [handleBlur]
+    []
   )
 
   const handleClickCancel = () => {
@@ -638,7 +680,7 @@ export const AddCouponDetails = () => {
   }
 
   const handleClickSubmit = () => {
-    handleSubmit()
+    handleSubmit(onSubmit)()
   }
 
   return (
@@ -693,7 +735,7 @@ export const AddCouponDetails = () => {
         cancelBtnClick={handleClickCancel}
         submitBtnClick={handleClickSubmit}
       />
-      <Spinner visible={loading} />
+      <Spinner visible={addCouponMutation.isPending} />
     </AdminCard>
   )
 }

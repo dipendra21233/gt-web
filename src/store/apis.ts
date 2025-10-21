@@ -148,7 +148,7 @@ export const getBookingsDataApi = (
 ): Promise<AxiosResponse> => {
   return NetworkClient.post(
     `${process.env.NEXT_PUBLIC_API_URL}api/v1/bookings/${url}`,
-    data
+    JSON.stringify(data)
   )
 }
 export const getTransactionsDataApi = (
@@ -156,7 +156,7 @@ export const getTransactionsDataApi = (
 ): Promise<AxiosResponse> => {
   return NetworkClient.post(
     `${process.env.NEXT_PUBLIC_API_URL}api/v1/bookings/transactions`,
-    data
+    JSON.stringify(data)
   )
 }
 export const getLedgerDataApi = (
@@ -164,7 +164,7 @@ export const getLedgerDataApi = (
 ): Promise<AxiosResponse> => {
   return NetworkClient.post(
     `${process.env.NEXT_PUBLIC_API_URL}api/v1/bookings/ledger`,
-    data
+    JSON.stringify(data)
   )
 }
 

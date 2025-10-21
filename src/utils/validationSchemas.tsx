@@ -35,9 +35,6 @@ export const signupValidationSchema = yup.object().shape({
 })
 
 export const addCouponValidationSchema = yup?.object()?.shape({
-  seriesName: yup
-    ?.string()
-    ?.required(translationWithFunction?.requiredValidation('Series Name')),
   origin: yup
     ?.string()
     .required(translationWithFunction?.requiredValidation('Origin')),
@@ -46,6 +43,7 @@ export const addCouponValidationSchema = yup?.object()?.shape({
     ?.required(translationWithFunction?.requiredValidation('Destination')),
   journeyType: yup
     ?.string()
+    .oneOf(['Domestic', 'International'])
     .required(translationWithFunction?.requiredValidation('Journey Type')),
   carrier: yup
     ?.string()
@@ -79,41 +77,96 @@ export const addCouponValidationSchema = yup?.object()?.shape({
     ?.string()
     ?.required(translationWithFunction?.requiredValidation('End Journey Date')),
   adultTax: yup
-    ?.number()
-    ?.typeError('Adult Tax must be a number')
-    ?.positive('Adult Tax must be greater than 0')
+    ?.string()
     ?.required(translationWithFunction?.requiredValidation('Adult Tax')),
   childTax: yup
-    ?.number()
-    ?.typeError('Child Tax must be a number')
-    ?.positive('Child Tax must be greater than 0')
+    ?.string()
     ?.required(translationWithFunction?.requiredValidation('Child Tax')),
   infantTax: yup
-    ?.number()
-    ?.typeError('Infant Tax must be a number')
-    ?.positive('Infant Tax must be greater than 0')
+    ?.string()
     ?.required(translationWithFunction?.requiredValidation('Infant Tax')),
   totalAmount: yup
-    ?.number()
-    ?.typeError('Total Amount must be a number')
-    ?.positive('Total Amount must be greater than 0')
+    ?.string()
     ?.required(translationWithFunction?.requiredValidation('Total Amount')),
-  couponSectors: yup.array().of(
-    yup.object().shape({
-      carrier: yup
-        .string()
-        .required(translationWithFunction?.requiredValidation('Carrier')),
-      flightNumber: yup
-        .string()
-        .required(translationWithFunction?.requiredValidation('Flight Number')),
-      classType: yup
-        .string()
-        .required(translationWithFunction?.requiredValidation('Class Type')),
-      flightType: yup
-        .string()
-        .required(translationWithFunction?.requiredValidation('Flight Type')),
-    })
-  ),
+  sectorDetails: yup.object().shape({
+    carrier: yup
+      .string()
+      .required(translationWithFunction?.requiredValidation('Carrier')),
+    flightNumber: yup
+      .string()
+      .required(translationWithFunction?.requiredValidation('Flight Number')),
+    flightClass: yup
+      .string()
+      .required(translationWithFunction?.requiredValidation('Class Type')),
+    flightType: yup
+      .string()
+      .oneOf(['Onward', 'Return'])
+      .required(translationWithFunction?.requiredValidation('Flight Type')),
+    depTime: yup
+      .string()
+      .required(translationWithFunction?.requiredValidation('Dep. Time')),
+    arrTime: yup
+      .string()
+      .required(translationWithFunction?.requiredValidation('Arr. Time')),
+    origin: yup
+      .string()
+      .required(translationWithFunction?.requiredValidation('Origin')),
+    destination: yup
+      .string()
+      .required(translationWithFunction?.requiredValidation('Destination')),
+    startTerminal: yup
+      .string()
+      .required(translationWithFunction?.requiredValidation('Start Terminal')),
+    endTerminal: yup
+      .string()
+      .required(translationWithFunction?.requiredValidation('End Terminal')),
+    refundable: yup
+      .string()
+      .oneOf(['Refundable', 'Non-Refundable'])
+      .required(translationWithFunction?.requiredValidation('Refundable')),
+    depDate: yup
+      .string()
+      .required(translationWithFunction?.requiredValidation('Dep. Date')),
+    dayChange: yup
+      .string()
+      .oneOf(['yes', 'no'])
+      .required(translationWithFunction?.requiredValidation('Day Change')),
+  }),
+})
+
+export const addMarkupValidationSchema = yup.object().shape({
+  category: yup
+    .string()
+    .required('Category is required'),
+  carrier: yup
+    .string()
+    .required('Carrier is required'),
+  airlineType: yup
+    .string()
+    .required('Airline Type is required'),
+  flat: yup
+    .number()
+    .typeError('Flat must be a number')
+    .min(0, 'Flat must be greater than or equal to 0')
+    .required('Flat is required'),
+  yq: yup
+    .number()
+    .typeError('YQ must be a number')
+    .min(0, 'YQ must be greater than or equal to 0')
+    .when('airlineType', {
+      is: 'percentage',
+      then: (schema) => schema.required('YQ is required when airline type is percentage'),
+      otherwise: (schema) => schema.notRequired(),
+    }),
+  tax: yup
+    .number()
+    .typeError('Tax must be a number')
+    .min(0, 'Tax must be greater than or equal to 0')
+    .when('airlineType', {
+      is: 'percentage',
+      then: (schema) => schema.required('Tax is required when airline type is percentage'),
+      otherwise: (schema) => schema.notRequired(),
+    }),
 })
 
 export const loginValidationSchema = yup.object().shape({

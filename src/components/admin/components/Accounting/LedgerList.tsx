@@ -37,10 +37,24 @@ const LedgerList = () => {
     numberOfRows: 10,
 
   })
+  const [validationErrors, setValidationErrors] = useState<{
+    fromDate?: string
+  }>({})
 
 
 
   const handleSearch = () => {
+    // Clear previous validation errors
+    setValidationErrors({})
+    
+    // Validate From Date
+    if (!filterValues.fromDate || filterValues.fromDate.trim() === '') {
+      setValidationErrors({
+        fromDate: 'From Date is required'
+      })
+      return
+    }
+
     getLedgerMutation({
       pageNumber: filterValues.pageNumber,
       numberOfRows: filterValues.numberOfRows,
@@ -68,8 +82,18 @@ const LedgerList = () => {
               <DateInputField
                 placeholder="From Date"
                 value={filterValues?.fromDate || ''}
-                onChange={(value) => setFilterValues({ ...filterValues, fromDate: value })}
+                onChange={(value) => { 
+                  setFilterValues({ ...filterValues, fromDate: value })
+                  // Clear validation error when user selects a date
+                  if (validationErrors.fromDate) {
+                    setValidationErrors({ fromDate: undefined })
+                  }
+                }}
                 label="From Date"
+                format="DD/MM/YYYY"
+                errors={validationErrors.fromDate}
+                required
+                isShowRequired
               />
 
               <DateInputField
@@ -77,24 +101,22 @@ const LedgerList = () => {
                 value={filterValues?.toDate || ''}
                 onChange={(value) => setFilterValues({ ...filterValues, toDate: value })}
                 label="To Date"
+                format="DD/MM/YYYY"
               />
 
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'flex-end',
-                  height: '100%',
                   gridColumn: 'auto',
+                  justifyContent: 'center',
                   gap: '20px',
+                  height: '100%',
                 }}
               >
                 <ThemeButton onClick={handleSearch} text="Search" isLoading={isPending} />
                 <ThemeButton
                   wrapperClassName="flex item-center"
-                  sx={{
-                    backgroundColor: '#1e293b',
-                    border: '1px solid #1e293b',
-                  }}
                   onClick={handleSearch}
                   text="Export to CSV"
                   icon={<LuDownload size={20} color="white" />}

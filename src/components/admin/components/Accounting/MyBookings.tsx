@@ -6,7 +6,7 @@ import { SelectInputField } from '@/components/web/core/SelectInputField/SelectI
 import { useGetBookingsMutation } from '@/hooks/useMutations'
 import { GetMyBookingsFlightBookingDetails, MyBookingsFilterValues } from '@/types/module/adminModules/myBookingModule'
 import { myBookingTypeOptions } from '@/utils/constant'
-import { formatDate, formatValue } from '@/utils/functions'
+import { formatDate, formatValue, formatDateDDMMYYYY } from '@/utils/functions'
 import { translation } from '@/utils/translation'
 import { useState } from 'react'
 import { Box } from 'theme-ui'
@@ -22,8 +22,12 @@ const MyBookings = () => {
     fromDate: '',
     toDate: '',
     pageNumber: 1,
-    numberOfRows: 10,
+    numberOfRows: 100,
   })
+  const [validationErrors, setValidationErrors] = useState<{
+    selectType?: string
+    fromDate?: string
+  }>({})
 
   const ledgerColumns: PremiumTableColumn<GetMyBookingsFlightBookingDetails>[] = [
     {
@@ -36,30 +40,18 @@ const MyBookings = () => {
     {
       header: 'Booking Date ',
       accessorKey: 'BookingDate',
-      cell: ({ row }) => <div>{formatDate(row.original?.BookingDate)}</div>,
+      cell: ({ row }) => <div>{formatDateDDMMYYYY(row.original?.BookingDate)}</div>,
     },
     {
       header: 'Dept',
       accessorKey: 'Dept',
-      cell: ({ row }) => (
-        <div>
-          {row.original?.JDate !== null ? formatDate(row.original?.JDate) : '-'}
-        </div>
-      ),
+      cell: ({ row }) => <div>{formatDateDDMMYYYY(row.original?.JDate)}</div>,
     },
 
     {
       header: 'JDate',
       accessorKey: 'JDate',
-      cell: ({ row }) => {
-        return (
-          <div>
-            {row.original?.JDate !== null
-              ? formatDate(row.original?.JDate)
-              : '-'}
-          </div>
-        )
-      },
+      cell: ({ row }) => <div>{formatDateDDMMYYYY(row.original?.JDate)}</div>,
     },
     {
       header: 'InvAmt',
@@ -107,6 +99,31 @@ const MyBookings = () => {
   ]
 
   const handleSearch = () => {
+    // Clear previous validation errors
+    setValidationErrors({})
+    
+    // Validate Select Type
+    if (!filterValues.selectType || !filterValues.selectType[0]) {
+      setValidationErrors(prev => ({
+        ...prev,
+        selectType: 'Select Type is required'
+      }))
+    }
+    
+    // Validate From Date
+    if (!filterValues.fromDate || filterValues.fromDate.trim() === '') {
+      setValidationErrors(prev => ({
+        ...prev,
+        fromDate: 'From Date is required'
+      }))
+    }
+    
+    // If there are validation errors, don't proceed
+    if ((!filterValues.selectType || !filterValues.selectType[0]) || 
+        (!filterValues.fromDate || filterValues.fromDate.trim() === '')) {
+      return
+    }
+
     getMyBookingsMutation({
       selectType: filterValues?.selectType?.[0]?.value,
       fromDate: filterValues.fromDate,
@@ -136,24 +153,40 @@ const MyBookings = () => {
               <SelectInputField
                 placeholder="Select Type"
                 value={filterValues.selectType?.[0]?.label || ''}
-                onChange={(selectedOption) =>
+                onChange={(selectedOption) => {
                   setFilterValues({
                     ...filterValues, selectType: [{
-                      value: selectedOption?.value as 'flightBookings' | 'flightCancellations',
+                      value: selectedOption?.value as 'flightBookings' | 'flightCancellations' | 'flightReschedules',
                       label: selectedOption?.label as string
                     }]
                   })
-                }
+                  // Clear validation error when user selects an option
+                  if (validationErrors.selectType) {
+                    setValidationErrors(prev => ({ ...prev, selectType: undefined }))
+                  }
+                }}
                 label="Select Type"
                 firstInputBox
                 options={myBookingTypeOptions}
+                errors={validationErrors.selectType}
+                isShowRequired
               />
 
               <DateInputField
                 placeholder="From Date"
                 value={filterValues.fromDate as string}
-                onChange={(value) => { setFilterValues({ ...filterValues, fromDate: value }) }}
+                onChange={(value) => { 
+                  setFilterValues({ ...filterValues, fromDate: value })
+                  // Clear validation error when user selects a date
+                  if (validationErrors.fromDate) {
+                    setValidationErrors(prev => ({ ...prev, fromDate: undefined }))
+                  }
+                }}
                 label="From Date"
+                format="DD/MM/YYYY"
+                errors={validationErrors.fromDate}
+                required
+                isShowRequired
               />
 
               <DateInputField
@@ -161,6 +194,7 @@ const MyBookings = () => {
                 value={filterValues.toDate as string}
                 onChange={(value) => { setFilterValues({ ...filterValues, toDate: value }) }}
                 label="To Date"
+                format="DD/MM/YYYY"
               />
 
               <Box

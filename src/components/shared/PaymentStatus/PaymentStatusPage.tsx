@@ -218,14 +218,6 @@ const PaymentStatusPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100 payment-detail-row">
-                    <Text variant="Maison14Regular125" color="#666666">
-                      Transaction Date
-                    </Text>
-                    <Text variant="Maison14Medium125" color="#303030">
-                      {formatDate(paymentData.transactionDate)}
-                    </Text>
-                  </div>
 
                   <div className="flex justify-between items-center py-2 border-b border-gray-100 payment-detail-row">
                     <Text variant="Maison14Regular125" color="#666666">

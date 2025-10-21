@@ -4,10 +4,13 @@ import { TextInputField } from '@/components/shared/TextInputField/TextInputFiel
 import { CustomModalBtn } from '@/components/web/core/Button/CustomModalBtn'
 import { SelectInputField } from '@/components/web/core/SelectInputField/SelectInputField'
 import Spinner from '@/components/web/core/spinner/Spinner'
-import { addMarkupDetails } from '@/store/actions/coupon.action'
-import { Markup } from '@/types/module/adminModules/markupModule'
+import {
+  showErrorToast,
+  showSuccessToast,
+} from '@/components/web/core/Toast/CustomToast'
+import { useAddMarkupDetailsMutation } from '@/hooks/useMutations'
+import { Markup, AddMarkupFormValues } from '@/types/module/adminModules/markupModule'
 import { Field, FieldType } from '@/types/module/authModule'
-import { MainStoreType } from '@/types/store/reducers/main.reducers'
 import {
   airlineTypeOptions,
   carrierOptions,
@@ -15,114 +18,177 @@ import {
 } from '@/utils/constant'
 import { appRoutes } from '@/utils/routes'
 import { translation } from '@/utils/translation'
-import { useFormik } from 'formik'
+import { addMarkupValidationSchema } from '@/utils/validationSchemas'
+import { yupResolver } from '@hookform/resolvers/yup'
 import { useRouter } from 'next/navigation'
-import { useCallback } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useCallback, useMemo } from 'react'
+import { useForm } from 'react-hook-form'
 import { Box } from 'theme-ui'
+import * as yup from 'yup'
 
 export const AddMarkup = () => {
   const router = useRouter()
-  const dispatch = useDispatch()
+  const addMarkupMutation = useAddMarkupDetailsMutation()
 
-  const { loading } = useSelector((state: MainStoreType) => state.couponData)
+  // Create a local validation schema that matches AddMarkupFormValues exactly
+  const validationSchema = yup.object().shape({
+    category: yup.string().required('Category is required'),
+    carrier: yup.string().required('Carrier is required'),
+    airlineType: yup.string().required('Airline Type is required'),
+    flat: yup.string().required('Flat is required'),
+    yq: yup.string().optional(),
+    tax: yup.string().optional(),
+  })
 
-  const InitialValues = {
+  const defaultValues: AddMarkupFormValues = {
     category: '',
     carrier: '',
     airlineType: '',
-    flat: 0,
-    yq: 0,
-    tax: 0,
-    markup: 0,
-  } as Markup
-
-  const formik = useFormik({
-    initialValues: InitialValues,
-    enableReinitialize: true,
-    // validationSchema: addCouponValidationSchema,
-    onSubmit: (values) => {
-      const { category, carrier, airlineType, flat } = values
-      const payload = {
-        category,
-        carrier,
-        airlineType,
-        flat,
-        markup: 0,
-      }
-      dispatch(
-        addMarkupDetails(payload as Markup, () => {
-          router.push(appRoutes?.markupManagement)
-        })
-      )
-    },
-  })
+    flat: '0',
+    yq: '0',
+    tax: '0',
+  }
 
   const {
-    handleBlur,
-    values,
-    errors,
-    touched,
-    setFieldValue,
-    setFieldTouched,
+    register,
     handleSubmit,
-  } = formik
+    watch,
+    setValue,
+    clearErrors,
+    setError,
+    formState: { errors, touchedFields },
+    trigger,
+  } = useForm<AddMarkupFormValues>({
+    defaultValues,
+    mode: 'onBlur',
+  })
 
-  const couponDetailsFields: Field[] = [
+  const watchedValues = watch()
+
+  // Optimized field change handlers using useCallback
+  const createFieldChangeHandler = useCallback((fieldName: keyof AddMarkupFormValues) => {
+    return (val: any) => {
+      setValue(fieldName, val)
+      clearErrors(fieldName)
+    }
+  }, [setValue, clearErrors])
+
+  const onSubmit = (values: AddMarkupFormValues) => {
+    const { category, carrier, airlineType, flat, yq, tax } = values
+    
+    // Clear all previous errors
+    clearErrors()
+    
+    let hasErrors = false
+    
+    // Manual validation for required fields
+    if (!category || category.trim() === '') {
+      setError('category', { type: 'required', message: 'Category is required' })
+      hasErrors = true
+    }
+    if (!carrier || carrier.trim() === '') {
+      setError('carrier', { type: 'required', message: 'Carrier is required' })
+      hasErrors = true
+    }
+    if (!airlineType || airlineType.trim() === '') {
+      setError('airlineType', { type: 'required', message: 'Airline Type is required' })
+      hasErrors = true
+    }
+    if (!flat || flat.trim() === '') {
+      setError('flat', { type: 'required', message: 'Flat is required' })
+      hasErrors = true
+    }
+    
+    // Custom validation for conditional fields
+    if (airlineType === 'percentage') {
+      if (!yq || yq.trim() === '') {
+        setError('yq', { type: 'required', message: 'YQ is required when airline type is percentage' })
+        hasErrors = true
+      }
+      if (!tax || tax.trim() === '') {
+        setError('tax', { type: 'required', message: 'Tax is required when airline type is percentage' })
+        hasErrors = true
+      }
+    }
+    
+    // If there are validation errors, don't submit
+    if (hasErrors) {
+      return
+    }
+    
+    const payload: Markup = {
+      category,
+      carrier,
+      airlineType,
+      flat: Number(flat),
+      markup: 0,
+      ...(airlineType === 'percentage' && {
+        yq: Number(yq),
+        tax: Number(tax),
+      }),
+    }
+
+    addMarkupMutation.mutate(payload, {
+      onSuccess: () => {
+        showSuccessToast('Markup added successfully')
+        router.push(appRoutes?.markupManagement)
+      },
+      onError: () => {
+        showErrorToast('Failed to add markup')
+      },
+    })
+  }
+
+  const couponDetailsFields: Field[] = useMemo(() => [
     {
       name: 'category',
       label: 'Select Category',
-      value: values.category,
+      value: watchedValues.category,
       placeholder: 'Select Category',
       type: FieldType.SELECT_INPUT_FIELD,
       isShowRequired: true,
       options: selectCategoryOptions,
-      onChange: (val) => setFieldValue('category', val),
-      error: errors.category,
-      touched: touched.category,
+      onChange: createFieldChangeHandler('category'),
+      error: errors.category?.message,
+      touched: touchedFields.category || !!errors.category,
     },
     {
       name: 'carrier',
       label: 'Select Carrier',
-      value: values.carrier,
+      value: watchedValues.carrier,
       placeholder: 'Select Carrier',
       type: FieldType.SELECT_INPUT_FIELD,
       isShowRequired: true,
       options: carrierOptions,
-      onChange: (val) => setFieldValue('carrier', val),
-      error: errors.carrier,
-      touched: touched.carrier,
+      onChange: createFieldChangeHandler('carrier'),
+      error: errors.carrier?.message,
+      touched: touchedFields.carrier || !!errors.carrier,
     },
     {
       name: 'airlineType',
       label: 'Select Airline Type',
-      value: values.airlineType,
+      value: watchedValues.airlineType,
       options: airlineTypeOptions,
       placeholder: 'Select Airline Type',
       type: FieldType.SELECT_INPUT_FIELD,
       isShowRequired: true,
-      onChange: (val) => setFieldValue('airlineType', val),
-      error: errors.airlineType,
-      touched: touched.airlineType,
-      onBlur: () => {
-        setFieldTouched('airlineType', true)
-      },
+      onChange: createFieldChangeHandler('airlineType'),
+      error: errors.airlineType?.message,
+      touched: touchedFields.airlineType || !!errors.airlineType,
+      onBlur: () => trigger('airlineType'),
     },
     {
       name: 'flat',
       label: 'Flat',
-      value: values.flat.toString(),
+      value: watchedValues.flat,
       placeholder: 'Enter Flat',
       type: FieldType.TEXT_INPUT_FIELD,
       isShowRequired: true,
-      onChange: (val) => setFieldValue('flat', Number(val)),
-      error: errors.flat,
-      touched: touched.flat,
-      onBlur: () => {
-        setFieldTouched('flat', true)
-      },
+      onChange: createFieldChangeHandler('flat'),
+      error: errors.flat?.message,
+      touched: touchedFields.flat || !!errors.flat,
     },
-  ]
+  ], [watchedValues, errors, touchedFields, createFieldChangeHandler, trigger])
 
   const renderField = useCallback(
     (field: Field) => {
@@ -167,7 +233,6 @@ export const AddMarkup = () => {
           onFocus={() => {
             field.onFocus?.()
           }}
-          onBlur={handleBlur}
           manualErrorSX={{
             display: 'block',
             textAlign: 'start',
@@ -182,11 +247,11 @@ export const AddMarkup = () => {
         />
       )
     },
-    [handleBlur]
+    []
   )
 
   const handleClickSubmit = () => {
-    handleSubmit()
+    handleSubmit(onSubmit)()
   }
 
   return (
@@ -202,17 +267,19 @@ export const AddMarkup = () => {
         >
           {couponDetailsFields.map(renderField)}
 
-          {values.airlineType === 'percentage' && (
+          {watchedValues.airlineType === 'percentage' && (
             <>
               <TextInputField
                 name="yq"
                 label="%YQ"
-                value={values.yq}
-                onChange={(e) => setFieldValue('yq', e)}
+                value={watchedValues.yq}
+                onChange={(e) => {
+                  setValue('yq', e)
+                  clearErrors('yq')
+                }}
                 placeholder="Enter %YQ"
-                errors={errors.yq}
-                touched={touched.yq}
-                onBlur={handleBlur}
+                errors={errors.yq?.message}
+                touched={touchedFields.yq || !!errors.yq}
                 isShowRequired={true}
                 wrapperClass="mt-0 w-[100%]"
                 labelSx={{ display: 'block', textAlign: 'start' }}
@@ -221,12 +288,14 @@ export const AddMarkup = () => {
               <TextInputField
                 name="tax"
                 label="%Tax"
-                value={values.tax}
-                onChange={(e) => setFieldValue('tax', e)}
+                value={watchedValues.tax}
+                onChange={(e) => {
+                  setValue('tax', e)
+                  clearErrors('tax')
+                }}
                 placeholder="Enter %Tax"
-                errors={errors.tax}
-                touched={touched.tax}
-                onBlur={handleBlur}
+                errors={errors.tax?.message}
+                touched={touchedFields.tax || !!errors.tax}
                 isShowRequired={true}
                 wrapperClass="mt-0 w-[100%]"
                 labelSx={{ display: 'block', textAlign: 'start' }}
@@ -241,7 +310,7 @@ export const AddMarkup = () => {
         submitBtnTitle={translation?.SUBMIT}
         submitBtnClick={handleClickSubmit}
       />
-      <Spinner visible={loading} />
+      <Spinner visible={addMarkupMutation.isPending} />
     </AdminCard>
   )
 }

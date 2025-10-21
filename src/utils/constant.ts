@@ -109,9 +109,9 @@ export const queueStatusOptions = [
 ]
 
 export const myBookingTypeOptions = [
-  { label: 'Flight Bookings', value: 'flight_bookings' },
-  { label: 'Flight Cancelation', value: 'flight_cancelation' },
-  { label: 'Flight Reschedule', value: 'flight_reschedule' },
+  { label: 'Flight Bookings', value: 'flightBookings' },
+  { label: 'Flight Cancelation', value: 'flightCancellations' },
+  { label: 'Flight Reschedule', value: 'flightReschedules' },
 ]
 export const selectCategoryOptions = [
   { label: 'Flights Domestic', value: 'Flights Domestic' },

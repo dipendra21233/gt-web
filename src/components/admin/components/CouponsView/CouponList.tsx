@@ -51,14 +51,20 @@ export default function CouponList() {
     },
     {
       header: 'TotalSeats',
-      accessorKey: 'totalSeats',
+      accessorKey: 'availableSeats',
       id: 'totalSeats',
+      cell: ({ row }) => (
+        <div>{row.original.availableSeats || 'N/A'}</div>
+      ),
       width: 140,
     },
     {
       header: 'AvailSeats',
-      accessorKey: 'availSeats',
+      accessorKey: 'availableSeats',
       id: 'availSeats',
+      cell: ({ row }) => (
+        <div>{row.original.availableSeats || 'N/A'}</div>
+      ),
       width: 140,
     },
     { header: 'A Tax', accessorKey: 'adultTax', width: 140 },

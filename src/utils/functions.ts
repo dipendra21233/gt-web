@@ -125,6 +125,24 @@ export function formatDate(date: string, format: string = 'MM/DD/YYYY') {
   return moment(date).format(format)
 }
 
+export function formatDateDDMMYYYY(dateString: string | null | undefined): string {
+  if (!dateString) return '-';
+  
+  // If already in DD/MM/YYYY format, return as is
+  if (typeof dateString === 'string' && dateString.includes('/') && dateString.length === 10) {
+    return dateString;
+  }
+  
+  // Try to parse with moment using DD/MM/YYYY format
+  const momentDate = moment(dateString, 'DD/MM/YYYY', true);
+  if (momentDate.isValid()) {
+    return momentDate.format('DD/MM/YYYY');
+  }
+  
+  // Fallback to regular formatDate
+  return formatDate(dateString, 'DD/MM/YYYY');
+}
+
 export function renderWithFallback(
   value: any,
   dataType: 'string' | 'number' = 'string'

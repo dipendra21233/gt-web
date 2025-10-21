@@ -25,7 +25,7 @@ const DateInputField: FC<DateInputFieldProps & TextInputFieldProps> = ({
   value,
   onChange,
   placeholder,
-  format = 'MM/DD/YYYY',
+  format = 'DD/MM/YYYY',
   manualErrorMessage,
   requiredIconSx,
   disabledDate,

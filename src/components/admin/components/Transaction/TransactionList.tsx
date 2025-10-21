@@ -356,6 +356,7 @@ const TransactionList = () => {
                   setFilterValues({ ...filterValues, fromDate: value })
                 }}
                 label="From Date"
+                format="DD/MM/YYYY"
               />
 
               <DateInputField
@@ -365,6 +366,7 @@ const TransactionList = () => {
                   setFilterValues({ ...filterValues, toDate: value })
                 }}
                 label="To Date"
+                format="DD/MM/YYYY"
               />
 
               <Box

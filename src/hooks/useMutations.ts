@@ -1,5 +1,7 @@
 import { showErrorToast } from '@/components/web/core/Toast/CustomToast'
 import {
+  addCouponDetailsApi,
+  addMarkupDetailsApi,
   forgotPasswordApi,
   getBookingsDataApi,
   getReviewFlightDetailsApi,
@@ -12,6 +14,8 @@ import {
   verifyOtpApi,
 } from '@/store/apis'
 import { MyBookingsRequestData } from '@/types/module/adminModules/myBookingModule'
+import { CouponDetails } from '@/types/module/adminModules/couponModule'
+import { Markup } from '@/types/module/adminModules/markupModule'
 import {
   ForgotPasswordPrpops,
   LoginPrpops,
@@ -112,11 +116,11 @@ export function useFlightSearchRequestMutation() {
     },
   })
 }
-export function useGetBookingsMutation({ url }: { url: string }) {
+export function useGetBookingsMutation<T = MyBookingsRequestData>({ url }: { url: string }) {
   return useMutation({
     mutationKey: ['GetBookings', url],
-    mutationFn: async (payload: MyBookingsRequestData) => {
-      return getBookingsDataApi(payload, url)
+    mutationFn: async (payload: T) => {
+      return getBookingsDataApi(payload as any, url)
     },
     onError(error: AxiosError<AxiosErrorResponse>) {
       if (error.response) {
@@ -169,6 +173,36 @@ export function useGetReviewFlightDetailsMutation() {
       return getReviewFlightDetailsApi({
         priceIds: payload,
       })
+    },
+    onError(error: AxiosError<AxiosErrorResponse>) {
+      if (error.response) {
+        const errorMessage = error.response?.data?.message
+        showErrorToast(errorMessage)
+      }
+    },
+  })
+}
+
+export function useAddCouponDetailsMutation() {
+  return useMutation({
+    mutationKey: ['AddCouponDetails'],
+    mutationFn: async (payload: CouponDetails) => {
+      return addCouponDetailsApi(payload)
+    },
+    onError(error: AxiosError<AxiosErrorResponse>) {
+      if (error.response) {
+        const errorMessage = error.response?.data?.message
+        showErrorToast(errorMessage)
+      }
+    },
+  })
+}
+
+export function useAddMarkupDetailsMutation() {
+  return useMutation({
+    mutationKey: ['AddMarkupDetails'],
+    mutationFn: async (payload: Markup) => {
+      return addMarkupDetailsApi(payload)
     },
     onError(error: AxiosError<AxiosErrorResponse>) {
       if (error.response) {

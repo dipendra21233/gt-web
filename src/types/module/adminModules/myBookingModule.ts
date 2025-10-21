@@ -202,7 +202,7 @@ export interface BookingDetailsData {
 }
 
 export interface MyBookingsRequestData {
-  selectType?: 'flightBookings' | 'flightCancellations'
+  selectType?: 'flightBookings' | 'flightCancellations' | 'flightReschedules'
   From?: string
   TO?: string
   pageNumber: number
@@ -231,12 +231,37 @@ export interface GetMyBookingsFlightBookingDetails {
 
 export interface MyBookingsFilterValues {
   selectType?:
-    | [{ value: 'flightBookings' | 'flightCancellations'; label: string }]
+    | [{ value: 'flightBookings' | 'flightCancellations' | 'flightReschedules'; label: string }]
     | null
   fromDate?: string
   toDate?: string
   pageNumber: number
   numberOfRows: number
+  transactionId?: string
+  sector?: string
+  bookingDate?: string
+  journeyDate?: string
+  passengerName?: string
+  gdsPnr?: string
+  airlinePnr?: string
+  bookingStatus?: string
+  paxInfo?: string
+  ticketNumbers?: string
+}
+
+export interface BookingManagementRequestData {
+  pageNumber: number
+  numberOfRows: number
+  transactionId?: string
+  sector?: string
+  bookingDate?: string
+  journeyDate?: string
+  passengerName?: string
+  gdsPnr?: string
+  airlinePnr?: string
+  bookingStatus?: string
+  paxInfo?: string
+  ticketNumbers?: string
 }
 
 export interface TransactionData {

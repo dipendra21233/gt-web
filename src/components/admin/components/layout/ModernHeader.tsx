@@ -1,8 +1,15 @@
 'use client'
 
 import { useGetBalanceData } from '@/queries/useGetBalanceData'
+import { logout } from '@/store/actions/auth.action'
+import { ACCESS_TOKEN } from '@/utils/constant'
+import { setInitialStorageState } from '@/utils/functions'
+import { appRoutes } from '@/utils/routes'
+import Cookies from 'js-cookie'
 import { ChevronDown, LogOut, Settings, User, UserCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { memo, useEffect, useRef, useState } from 'react'
+import { useDispatch } from 'react-redux'
 
 // Custom hook for scroll direction detection
 const useScrollDirection = () => {
@@ -55,6 +62,8 @@ const useScrollDirection = () => {
 }
 
 export const ModernHeader = memo(() => {
+  const router = useRouter()
+  const dispatch = useDispatch()
   const { balanceData } = useGetBalanceData()
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
@@ -73,6 +82,21 @@ export const ModernHeader = memo(() => {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  const handleClickLogout = () => {
+    const accessToken = Cookies.get(ACCESS_TOKEN)
+    if (accessToken) {
+      dispatch(
+        logout(accessToken, async (res: boolean) => {
+          if (res) {
+            router.push(appRoutes?.home)
+            setInitialStorageState()
+          }
+        })
+      )
+    }
+  }
+
 
   return (
     <header
@@ -444,6 +468,7 @@ export const ModernHeader = memo(() => {
                   />
 
                   <button
+                    onClick={handleClickLogout}
                     style={{
                       width: '100%',
                       display: 'flex',

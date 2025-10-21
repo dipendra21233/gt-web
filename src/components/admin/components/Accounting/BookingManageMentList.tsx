@@ -4,18 +4,17 @@ import DateInputField from '@/components/shared/TextInputField/DateInputField'
 import { TextInputField } from '@/components/shared/TextInputField/TextInputField'
 import { ThemeButton } from '@/components/web/core/Button/Button'
 import { SelectInputField } from '@/components/web/core/SelectInputField/SelectInputField'
-import { getMysBookingDetailsData } from '@/store/actions/accounting.action'
-import { RootState } from '@/store/store'
 import { BookingDetailsDataProps } from '@/types/module/adminModules/bookingDetailsModule'
-import { BookingTypeOptions, ITEMS_PER_PAGE } from '@/utils/constant'
+import { BookingManagementRequestData, MyBookingsFilterValues } from '@/types/module/adminModules/myBookingModule'
+import { BookingTypeOptions, ITEMS_PER_PAGE, myBookingTypeOptions } from '@/utils/constant'
 import { formatDate } from '@/utils/functions'
 import { useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 import { Box } from 'theme-ui'
 import { ActionDropdown, ActionMenuItem } from '../../core/Table/ActionDropDown'
 import PremiumDataTable, {
   PremiumTableColumn,
 } from '../../core/Table/PremiumDataTable'
+import { useGetBookingsMutation } from '@/hooks/useMutations'
 
 const getActionItems = (): ActionMenuItem[] => [
   {
@@ -39,9 +38,10 @@ const getActionItems = (): ActionMenuItem[] => [
 
 
 const BookingManageMentList = () => {
-  const dispatch = useDispatch()
-  const [currentPage] = useState<number>(1)
-  const [filterValues, setFilterValues] = useState({
+  const { mutate: getBookingManagementMutation, isPending, data: getBookingManagementData } = useGetBookingsMutation<BookingManagementRequestData>({ url: 'manage' })
+  const [filterValues, setFilterValues] = useState<MyBookingsFilterValues>({
+    pageNumber: 1,
+    numberOfRows: 10,
     transactionId: '',
     sector: '',
     bookingDate: '',
@@ -52,70 +52,63 @@ const BookingManageMentList = () => {
     paxInfo: '',
     journeyDate: '',
     ticketNumbers: '',
+    selectType: null,
   })
-
-  const { myssBookingDetailsData, loading } = useSelector(
-    (state: RootState) => state.accountingData
-  )
-  const myBookingDetailsDataArray = myssBookingDetailsData
-    ? [myssBookingDetailsData]
-    : []
-
-  const columns: PremiumTableColumn<BookingDetailsDataProps>[] = [
+  const [validationErrors, setValidationErrors] = useState<{
+    transactionId?: string
+  }>({})
+ console.log('check57',[getBookingManagementData?.data?.data]);
+ 
+  const columns: PremiumTableColumn<any>[] = [
     {
-      header: 'Sr',
-      accessorKey: 'sr',
-      cell: ({ row }) => (currentPage - 1) * ITEMS_PER_PAGE + row.index + 1,
+      header: 'Booking ID',
+      accessorKey: 'Booking ID',
+      cell: ({ row }) => <div>{row.original?.['Booking ID']}</div>,
     },
     {
       header: 'Tx.ID',
-      accessorKey: 'txId',
-      cell: ({ row }) => <div>{row.original?.order?.bookingId}</div>,
+      accessorKey: 'Tx.ID',
+      cell: ({ row }) => <div>{row.original?.['Tx.ID']}</div>,
     },
     {
       header: 'Sector',
-      accessorKey: 'sector',
-      cell: ({ row }) => (
-        <div>
-          {row.original?.itemInfos?.AIR?.tripInfos[0]?.sI[0]?.da?.code} -{' '}
-          {row.original?.itemInfos?.AIR?.tripInfos[0]?.sI[0]?.aa?.code}
-        </div>
-      ),
+      accessorKey: 'Sector',
+      cell: ({ row }) => <div>{row.original?.Sector}</div>,
     },
     {
       header: 'Booking Date',
-      accessorKey: 'bookingDate',
-      cell: ({ row }) => (
-        <div>{formatDate(row.original?.order?.createdOn)}</div>
-      ),
+      accessorKey: 'Booking Date',
+      cell: ({ row }) => <div>{row.original?.['Booking Date']}</div>,
     },
     {
       header: 'Passenger Name',
-      accessorKey: 'leadPaxName',
-      cell: ({ row }) => {
-        const traveller = row.original?.itemInfos?.AIR?.travellerInfos[0]
-        const passengerName = `${traveller?.ti} ${traveller?.fN} ${traveller?.lN}`
-        return <div>{passengerName}</div>
-      },
+      accessorKey: 'Passenger Name',
+      cell: ({ row }) => <div>{row.original?.['Passenger Name']}</div>,
+    },
+    {
+      header: 'Total Amount',
+      accessorKey: 'Total Amount',
+      cell: ({ row }) => <div>{row.original?.['Total Amount']?.toLocaleString()}</div>,
     },
     {
       header: 'GDSPNR',
-      accessorKey: 'gdsPnr',
-      cell: ({ row }) => (
-        <div>{row.original?.itemInfos?.AIR?.tripInfos[0]?.sI[0]?.fD?.fN}</div>
-      ),
+      accessorKey: 'GDSPNR',
+      cell: ({ row }) => <div>{row.original?.GDSPNR}</div>,
     },
     {
       header: 'AirlinePnr',
-      accessorKey: 'aPnr',
-      cell: ({ row }) => (
-        <div>{row.original?.itemInfos?.AIR?.tripInfos[0]?.sI[0]?.fD?.fN}</div>
-      ),
+      accessorKey: 'AirlinePnr',
+      cell: ({ row }) => <div>{row.original?.AirlinePnr}</div>,
     },
     {
       header: 'BookingStatus',
-      accessorKey: 'bookingStatus',
-      cell: ({ row }) => <div>{row.original?.order?.status}</div>,
+      accessorKey: 'BookingStatus',
+      cell: ({ row }) => <div>{row.original?.BookingStatus}</div>,
+    },
+    {
+      header: 'Select',
+      accessorKey: 'Select',
+      cell: ({ row }) => <div>{row.original?.Select}</div>,
     },
     {
       id: 'actions',
@@ -130,25 +123,54 @@ const BookingManageMentList = () => {
 
   const handleInputChange = (name: string, value: string) => {
     setFilterValues({ ...filterValues, [name]: value })
+    
+    // Clear validation error when user starts typing
+    if (name === 'transactionId' && validationErrors.transactionId) {
+      setValidationErrors({ ...validationErrors, transactionId: undefined })
+    }
   }
 
   const handleSearch = () => {
-    dispatch(
-      getMysBookingDetailsData({
-        bookingId: filterValues?.transactionId,
+    // Clear previous validation errors
+    setValidationErrors({})
+    
+    // Validate Transaction ID
+    if (!filterValues.transactionId || filterValues.transactionId.trim() === '') {
+      setValidationErrors({
+        transactionId: 'Transaction ID is required'
       })
-    )
+      return
+    }
+
+    getBookingManagementMutation({
+      pageNumber: filterValues.pageNumber,
+      numberOfRows: filterValues.numberOfRows,
+      transactionId: filterValues.transactionId,
+      sector: filterValues.sector,
+      bookingDate: filterValues.bookingDate,
+      journeyDate: filterValues.journeyDate,
+      passengerName: filterValues.passengerName,
+      gdsPnr: filterValues.gdsPnr,
+      airlinePnr: filterValues.airlinePnr,
+      bookingStatus: filterValues.bookingStatus,
+      paxInfo: filterValues.paxInfo,
+      ticketNumbers: filterValues.ticketNumbers,
+    })
   }
 
   return (
     <AdminCard heading="Booking Management">
       <PremiumDataTable
-        data={myBookingDetailsDataArray || []}
+        data={(() => {
+          const responseData = getBookingManagementData?.data?.data;
+          if (!responseData) return [];
+          return Array.isArray(responseData) ? responseData : [responseData];
+        })()}
         columns={columns}
-        loading={loading}
+        loading={isPending}
         enablePagination
         footer={
-          <>
+          <>  
             <Box
               className="grid gap-4 pb-4"
               sx={{
@@ -158,39 +180,27 @@ const BookingManageMentList = () => {
             >
               <TextInputField
                 placeholder="Enter Txid"
+                errors={validationErrors.transactionId}
                 firstInputBox
                 name="transactionId"
                 value={filterValues?.transactionId}
                 onChange={(value) => handleInputChange('transactionId', value)}
                 label="Transaction ID"
+                required
+                isShowRequired
               />
 
-              <SelectInputField
-                placeholder="Booking Type"
-                firstInputBox
-                label="Booking Type"
-                value={filterValues?.bookingStatus}
-                classNames={{
-                  container: () => 'w-full',
-                  control: () => 'w-full',
-                }}
-                onChange={(value) =>
-                  handleInputChange('bookingStatus', value?.value as string)
-                }
-                options={BookingTypeOptions}
-                labelSx={{ display: 'block', textAlign: 'start' }}
-              />
 
               <DateInputField
                 placeholder="Booking Date"
-                value={filterValues?.bookingDate}
+                value={filterValues?.bookingDate || ''}
                 onChange={(value) => handleInputChange('bookingDate', value)}
                 label="Booking Date"
               />
 
               <DateInputField
                 placeholder="Journey Date"
-                value={filterValues?.journeyDate}
+                value={filterValues?.journeyDate || ''}
                 onChange={(value) => handleInputChange('journeyDate', value)}
                 label="Journey Date"
               />
@@ -199,7 +209,7 @@ const BookingManageMentList = () => {
                 firstInputBox
                 placeholder="Ticket Numbers"
                 name="ticketNumbers"
-                value={filterValues?.ticketNumbers}
+                value={filterValues?.ticketNumbers || ''}
                 onChange={(value) => handleInputChange('ticketNumbers', value)}
                 label="Ticket Numbers"
               />
@@ -243,12 +253,11 @@ const BookingManageMentList = () => {
                 sx={{
                   display: 'flex',
                   alignItems: 'flex-end',
-                  // justifyContent: 'flex-end',
                   height: '100%',
                   gridColumn: 'auto',
                 }}
               >
-                <ThemeButton onClick={handleSearch} text="Search" />
+                <ThemeButton onClick={handleSearch} text="Search" isLoading={isPending} />
               </Box>
             </Box>
           </>
