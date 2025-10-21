@@ -32,8 +32,10 @@ import { FiMenu, FiX } from 'react-icons/fi'
 import { useDispatch } from 'react-redux'
 import { Box, Text } from 'theme-ui'
 import { ThemeButton } from '../../core/Button/Button'
+import { useGetBalanceData } from '@/queries/useGetBalanceData'
 
 const Navbar = () => {
+  const { balanceData } = useGetBalanceData()
   const [isSticky, setIsSticky] = useState(false)
   const [scrollOpacity, setScrollOpacity] = useState(1)
   const [isOpen, setIsOpen] = useState(false)
@@ -306,34 +308,83 @@ const Navbar = () => {
 
                           {/* Account Submenu */}
                           {openSubmenu === 'account' && (
-                            <div className="submenu">
+                            <div className="submenu account-submenu">
                               <Link
-                                href="/profile/personal"
+                                href={appRoutes.bookingManagement}
                                 className="submenu-item"
                               >
-                                <UserCircle size={16} />
-                                <span>Personal Info</span>
+                                <BookOpen size={16} />
+                                <span>Manage Bookings</span>
                               </Link>
                               <Link
-                                href="/profile/security"
+                                href={appRoutes.myBookings}
+                                className="submenu-item"
+                              >
+                                <BookOpen size={16} />
+                                <span>My Bookings</span>
+                              </Link>
+                              <Link
+                                href={appRoutes.ledgerManagement}
+                                className="submenu-item"
+                              >
+                                <CreditCard size={16} />
+                                <span>Ledger</span>
+                              </Link>
+                              <Link
+                                href={appRoutes.markupManagement}
+                                className="submenu-item"
+                              >
+                                <CreditCard size={16} />
+                                <span>Agent Markup</span>
+                              </Link>
+                              <Link
+                                href={appRoutes.holdQueuesManagement}
                                 className="submenu-item"
                               >
                                 <Shield size={16} />
-                                <span>Security</span>
+                                <span>Agent Queues</span>
                               </Link>
                               <Link
-                                href="/profile/privacy"
+                                href={appRoutes.holdQueuesManagement}
+                                className="submenu-item"
+                              >
+                                <Shield size={16} />
+                                <span>Flight Hold Queues</span>
+                              </Link>
+                              <Link
+                                href="/import-pnr"
                                 className="submenu-item"
                               >
                                 <Key size={16} />
-                                <span>Privacy</span>
+                                <span>Import PNR</span>
                               </Link>
                               <Link
-                                href="/profile/notifications"
+                                href="/agents-series-fares"
+                                className="submenu-item"
+                              >
+                                <CreditCard size={16} />
+                                <span>Agents Series Fares</span>
+                              </Link>
+                              <Link
+                                href="/add-staff"
+                                className="submenu-item"
+                              >
+                                <User size={16} />
+                                <span>Add Staff</span>
+                              </Link>
+                              <Link
+                                href="/view-all-staff"
+                                className="submenu-item"
+                              >
+                                <UserCircle size={16} />
+                                <span>View All Staff</span>
+                              </Link>
+                              <Link
+                                href="/reports"
                                 className="submenu-item"
                               >
                                 <Bell size={16} />
-                                <span>Notifications</span>
+                                <span>Reports</span>
                               </Link>
                             </div>
                           )}
@@ -368,9 +419,7 @@ const Navbar = () => {
                                 <Wallet size={16} />
                                 <span>Balance</span>
                                 <span className="balance-amount">
-                                  $
-                                  {(authUser as any)?.balance?.toFixed(2) ||
-                                    '0.00'}
+                                  ₹{balanceData?.availableBalance}
                                 </span>
                               </Link>
                               <Link
@@ -379,6 +428,13 @@ const Navbar = () => {
                               >
                                 <Plus size={16} />
                                 <span>Upload Balance</span>
+                              </Link>
+                              <Link
+                                href={appRoutes.userRequests}
+                                className="submenu-item"
+                              >
+                                <Shield size={16} />
+                                <span>Admin</span>
                               </Link>
                             </div>
                           )}

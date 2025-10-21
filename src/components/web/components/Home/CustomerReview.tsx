@@ -1,14 +1,12 @@
 'use client'
 
 import { Star } from 'lucide-react'
-import Image from 'next/image'
 import { useEffect, useRef } from 'react'
-import { Autoplay, Navigation, Pagination } from 'swiper/modules'
+import { Autoplay, Pagination } from 'swiper/modules'
 import { Swiper, SwiperSlide } from 'swiper/react'
 
 // Import Swiper styles
 import 'swiper/css'
-import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 
 const reviews = [
@@ -18,7 +16,7 @@ const reviews = [
     role: 'Project Manager',
     rating: 5,
     text: 'This AI product has transformed the way I manage my daily tasks. It\'s intuitive, fast, and incredibly accurate!',
-    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face'
+    initials: 'ST'
   },
   {
     id: 2,
@@ -26,7 +24,7 @@ const reviews = [
     role: 'Software Developer',
     rating: 5,
     text: 'I was skeptical at first, but this AI tool saved me hours of work. The automation features are a game-changer.',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face'
+    initials: 'MC'
   },
   {
     id: 3,
@@ -34,7 +32,7 @@ const reviews = [
     role: 'Data Analyst',
     rating: 5,
     text: 'The AI\'s ability to analyze data and provide insights is unmatched. It\'s like having a personal assistant 24/7.',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face'
+    initials: 'ER'
   },
   {
     id: 4,
@@ -42,7 +40,7 @@ const reviews = [
     role: 'Marketing Director',
     rating: 5,
     text: 'Outstanding service and support! The team went above and beyond to ensure our project was successful.',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face'
+    initials: 'DK'
   },
   {
     id: 5,
@@ -50,7 +48,7 @@ const reviews = [
     role: 'Business Owner',
     rating: 5,
     text: 'Professional, reliable, and innovative solutions. Highly recommend their services to anyone looking for quality.',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face'
+    initials: 'LW'
   },
   {
     id: 6,
@@ -58,7 +56,7 @@ const reviews = [
     role: 'Operations Manager',
     rating: 5,
     text: 'Exceptional attention to detail and customer service. They truly understand what their clients need.',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face'
+    initials: 'JW'
   }
 ]
 
@@ -88,13 +86,9 @@ const ReviewCard = ({ review }: { review: typeof reviews[0] }) => {
       </p>
 
       <div className="flex items-center gap-4 mt-auto">
-        <Image
-          src={review.avatar}
-          alt={review.name}
-          width={48}
-          height={48}
-          className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-        />
+        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+          {review.initials}
+        </div>
         <div className="min-w-0">
           <h4 className="font-semibold text-gray-900 text-sm truncate">{review.name}</h4>
           <p className="text-gray-500 text-xs truncate">{review.role}</p>
@@ -136,16 +130,12 @@ const CustomerReview = () => {
         <div className="relative">
           <Swiper
             ref={swiperRef}
-            modules={[Autoplay, Navigation, Pagination]}
+            modules={[Autoplay, Pagination]}
             spaceBetween={24}
             slidesPerView={1}
             autoplay={{
               delay: 3000,
               disableOnInteraction: false,
-            }}
-            navigation={{
-              nextEl: '.swiper-button-next-custom',
-              prevEl: '.swiper-button-prev-custom',
             }}
             pagination={{
               clickable: true,
@@ -176,19 +166,6 @@ const CustomerReview = () => {
               </SwiperSlide>
             ))}
           </Swiper>
-
-          {/* Custom Navigation Buttons */}
-          <button className="swiper-button-prev-custom absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white rounded-full w-12 h-12 shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors">
-            <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-
-          <button className="swiper-button-next-custom absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white rounded-full w-12 h-12 shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors">
-            <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
 
           {/* Custom Pagination */}
           <div className="swiper-pagination-custom flex justify-center mt-8 gap-2"></div>

@@ -110,6 +110,22 @@ const FlightSearchForm = ({ className = '', initial, onSearchSuccess }: FlightSe
   const { formState: { errors, isValid }, setValue, watch, handleSubmit, } = methods
   const formValues = watch()
   console.log(formValues, 'isValid96', isValid)
+  
+  // Filter options to exclude the selected city from the opposite field
+  const getFilteredOptions = useCallback((field: 'from' | 'to') => {
+    const oppositeField = field === 'from' ? 'to' : 'from'
+    const oppositeValue = formValues[oppositeField]
+    
+    if (!oppositeValue) {
+      return loadedAirports
+    }
+    
+    // Filter out airports from the same city as the opposite field
+    return loadedAirports.filter(airport => 
+      airport.city !== oppositeValue.city
+    )
+  }, [loadedAirports, formValues.from, formValues.to])
+  
   const getCityOptions = useMemo(() => loadedAirports, [loadedAirports])
 
   const loadAirportsData = useCallback((): AirportDataItemsProps[] => {
@@ -212,7 +228,18 @@ const FlightSearchForm = ({ className = '', initial, onSearchSuccess }: FlightSe
   const handleAirportChange = useCallback((field: 'from' | 'to', selectedOption: AirportOption | null) => {
     setValue(field, selectedOption)
     methods.clearErrors(field)
-  }, [setValue, methods])
+    
+    // If the selected city is the same as the opposite field, clear the opposite field
+    if (selectedOption) {
+      const oppositeField = field === 'from' ? 'to' : 'from'
+      const oppositeValue = formValues[oppositeField]
+      
+      if (oppositeValue && oppositeValue.city === selectedOption.city) {
+        setValue(oppositeField, null)
+        methods.clearErrors(oppositeField)
+      }
+    }
+  }, [setValue, methods, formValues.from, formValues.to])
 
   useEffect(() => {
     if (loadedAirports.length === 0) {
@@ -286,7 +313,7 @@ const FlightSearchForm = ({ className = '', initial, onSearchSuccess }: FlightSe
             label="From"
             icon={<MapPin size={16} />}
             placeholder="Enter departure city"
-            options={getCityOptions}
+            options={getFilteredOptions('from')}
             value={formValues.from}
             onChange={(selectedOption) => handleAirportChange('from', selectedOption)}
             onInputChange={handleSearchChange}
@@ -300,7 +327,7 @@ const FlightSearchForm = ({ className = '', initial, onSearchSuccess }: FlightSe
             label="To"
             icon={<MapPin size={16} />}
             placeholder="Enter destination city"
-            options={getCityOptions}
+            options={getFilteredOptions('to')}
             value={formValues.to}
             onChange={(selectedOption) => handleAirportChange('to', selectedOption)}
             onInputChange={handleSearchChange}

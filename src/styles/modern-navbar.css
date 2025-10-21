@@ -323,6 +323,32 @@
   backdrop-filter: blur(10px);
 }
 
+.account-submenu {
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 107, 53, 0.3) transparent;
+}
+
+.account-submenu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.account-submenu::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.account-submenu::-webkit-scrollbar-thumb {
+  background: rgba(255, 107, 53, 0.3);
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.account-submenu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 107, 53, 0.5);
+}
+
 @keyframes submenuSlideDown {
   from {
     opacity: 0;

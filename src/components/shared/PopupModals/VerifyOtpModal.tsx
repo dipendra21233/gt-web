@@ -68,12 +68,9 @@ const VerifyOtpModal = ({
         {
           onSuccess: (res) => {
             Cookies.set(ACCESS_TOKEN, res?.data?.data?.accessToken)
+            window.location.href = appRoutes?.home
             if (res?.data?.data?.user?.isAdmin) {
               Cookies.set(IS_ADMIN_USER, TRUE)
-              router.push(appRoutes?.userRequests)
-            }
-            else {
-              router.push(appRoutes?.home)
             }
             onClose()
             reset()
