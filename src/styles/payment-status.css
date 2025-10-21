@@ -1,0 +1,271 @@
+/* Payment Status Page Styles */
+
+.payment-status-container {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.status-card {
+  animation: slideInScale 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes slideInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.status-icon {
+  animation: bounceIn 1s ease-out 0.3s both;
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.payment-detail-row {
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  padding: 8px 0;
+}
+
+.payment-detail-row:hover {
+  background-color: rgba(255, 123, 0, 0.05);
+  transform: translateX(4px);
+  padding: 8px 16px;
+}
+
+.amount-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.amount-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.amount-card:hover::before {
+  left: 100%;
+}
+
+.action-button {
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+}
+
+.action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 123, 0, 0.3);
+}
+
+.action-button:active {
+  transform: translateY(0);
+}
+
+.copy-button {
+  opacity: 0.6;
+  transition: all 0.2s ease;
+}
+
+.copy-button:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.technical-info {
+  font-family: 'Courier New', monospace;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+}
+
+.status-badge {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 123, 0, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 123, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 123, 0, 0);
+  }
+}
+
+.success-gradient {
+  background: linear-gradient(135deg, #023e1a 0%, #043f12 100%);
+}
+
+.failure-gradient {
+  background: linear-gradient(135deg, #cc0000 0%, #ff0000 100%);
+}
+
+.glass-effect {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .payment-status-container {
+    padding: 16px;
+  }
+
+  .status-card {
+    margin: 0 -8px;
+    border-radius: 12px;
+  }
+
+  .payment-detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .payment-detail-row .detail-label {
+    font-size: 12px;
+    color: #666;
+  }
+
+  .payment-detail-row .detail-value {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .action-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .glass-effect {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .payment-detail-row:hover {
+    background-color: rgba(255, 123, 0, 0.1);
+  }
+
+  .technical-info {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+    border: 1px solid #4a5568;
+    color: #e2e8f0;
+  }
+}
+
+/* Print styles */
+@media print {
+  .payment-status-container {
+    background: white !important;
+    color: black !important;
+  }
+
+  .action-button,
+  .copy-button {
+    display: none !important;
+  }
+
+  .status-card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+
+  .success-gradient,
+  .failure-gradient {
+    background: #f8f9fa !important;
+    color: black !important;
+  }
+}
+
+/* Loading animation */
+.payment-loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 123, 0, 0.3);
+  border-radius: 50%;
+  border-top-color: #ff7b00;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Success checkmark animation */
+.success-checkmark {
+  animation: checkmark 0.6s ease-in-out 0.9s both;
+}
+
+@keyframes checkmark {
+  0% {
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Failure X animation */
+.failure-x {
+  animation: drawX 0.6s ease-in-out 0.9s both;
+}
+
+@keyframes drawX {
+  0% {
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}

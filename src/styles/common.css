@@ -1,0 +1,304 @@
+:root {
+  --border-clr: 214.3 31.8% 91.4%;
+  --neutral-400: 132 135 148;
+  --neutral-500: 235 146 13;
+  --border-primary: var(--neutral-400);
+  --border-secondary: var(--neutral-500);
+  --tw-border-opacity: 1;
+  --subbrand-50: 242 249 255;
+}
+
+/* Hide scrollbar for webkit browsers (Chrome, Safari, Edge) */
+.admin-card-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for modal content */
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+.flight-list-br {
+  border-color: hsl(214.3 31.8% 91.4%) !important;
+  border: 1 solid #e5e7eb;
+}
+
+.common-flight-booking-card {
+  width: 100% !important;
+  align-items: center;
+  padding: 30px !important;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  position: relative;
+}
+
+.custom-dropdown-control {
+  position: relative;
+  top: -14px;
+  width: -webkit-fill-available;
+}
+
+/* .common-flight-booking-card-input-label {
+  position: absolute;
+  top: 14px;
+  right: -17px;
+  color: #4a4a4a !important;
+  width: 100%;
+} */
+
+.common-flight-booking-card-input {
+  border: 1px solid #e7e7e7 !important;
+}
+
+.br-l-10 {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.br-r-10 {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.br-0 {
+  border-radius: 0px !important;
+}
+
+.common-flight-booking-input-disabled {
+  :disabled {
+    background-color: rgb(211, 211, 211) !important;
+  }
+}
+
+.travel-class-selector-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0px 15px 15px rgba(229, 229, 229, 0.32);
+  /* padding: 20px; */
+}
+
+.translate-center {
+  transform: translate(-15px, -64px);
+}
+
+.translate-center-2 {
+  transform: translate(8px, -93px) !important;
+}
+
+.rdrInputRanges {
+  display: none;
+}
+
+.rdrDefinedRangesWrapper {
+  display: none !important;
+}
+.rdrDateDisplayWrapper {
+  display: none !important;
+}
+
+.SearchControls_grid {
+  column-gap: 0.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+.form-check-input:checked[type='checkbox']:disabled {
+  background: url('../../public/svg/disabled-check-square.svg') !important;
+  background-color: #eaeaea !important;
+  background-position: center !important;
+  /* Center the image */
+  background-repeat: no-repeat !important;
+  /* Prevent the image from repeating */
+  background-size: 70% !important;
+}
+
+.permission-checkbox:checked {
+  background-color: #00c6b7 !important;
+  border-color: #00c6b7 !important;
+}
+
+.permission-checkbox:disabled {
+  background-color: #eaeaea !important;
+  border-color: #eaeaea !important;
+}
+
+.permission-checkbox:focus {
+  box-shadow: none !important;
+  border-color: #00c6b7 !important;
+}
+
+.permission-checkbox {
+  border: 1.5px solid #858585 !important;
+  border-radius: 2px;
+  padding: 10px;
+  margin-right: 10px;
+  position: relative;
+}
+
+.permission-checkbox::after {
+  color: #a6a6a6 !important;
+}
+
+.mgl-5 {
+  margin-left: 5px !important;
+}
+
+.mgl-10 {
+  margin-left: 10px !important;
+}
+
+.flight-list-card {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  border-width: 1px;
+  background-color: white;
+  border-color: rgb(var(--border-primary) / var(--tw-border-opacity));
+}
+.flight-list-card-selected {
+  border-color: rgb(var(--border-secondary) / var(--tw-border-opacity));
+  background-color: #abc8e5 !important;
+  border-width: 1px;
+}
+
+.switch-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 0 6px;
+  margin-left: 20px;
+  gap: 8px;
+}
+
+.custom-ticket-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 24px;
+}
+
+.custom-ticket-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.custom-ticket-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: 0.4s;
+  transition: 0.4s;
+}
+
+.custom-ticket-slider:before {
+  position: absolute;
+  content: '';
+  height: 14px;
+  width: 14px;
+  left: 4px;
+  bottom: 5px;
+  background-color: white;
+  -webkit-transition: 0.4s;
+  transition: 0.4s;
+}
+
+input:checked + .custom-ticket-slider {
+  background-color: #297189;
+}
+
+input:focus + .custom-ticket-slider {
+  box-shadow: 0 0 1px #297189;
+}
+
+input:checked + .custom-ticket-slider:before {
+  -webkit-transform: translateX(19px);
+  -ms-transform: translateX(19px);
+  transform: translateX(19px);
+}
+
+.custom-ticket-slider.custom-ticket-round {
+  border-radius: 34px;
+}
+
+.custom-ticket-slider.custom-ticket-round:before {
+  border-radius: 50%;
+}
+
+.custom-ticket-slider.custom-ticket-round {
+  border-radius: 34px;
+}
+
+.custom-ticket-slider.custom-ticket-round:before {
+  border-radius: 50%;
+}
+
+.book-btn {
+  width: 190px !important;
+}
+
+.flight-summary {
+  max-width: calc(100% - 450px) !important;
+}
+
+.flight-airport-name {
+  max-width: 160px !important;
+  word-wrap: break-word !important;
+  white-space: normal;
+}
+@media screen and (min-width: 500px) and (max-width: 1500px) {
+  .book-btn {
+    width: 150px !important;
+  }
+}
+
+/* :where(.css-dev-only-do-not-override-xex5fb).ant-drawer .ant-drawer-header{
+  display:none !important;
+} */
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Custom scrollbar styles for admin card scrollable content */
+.admin-card-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-card-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.admin-card-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.admin-card-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Firefox scrollbar styles */
+.admin-card-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}

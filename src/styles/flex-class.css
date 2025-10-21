@@ -1,0 +1,11 @@
+.flex-space-between-center {
+    align-items: center !important;
+    display: flex !important;
+    justify-content: space-between !important;
+}
+
+.flex-row-centered-gap-10 {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
