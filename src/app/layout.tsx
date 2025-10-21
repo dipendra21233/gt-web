@@ -61,6 +61,7 @@ const Maison = localFont({
 export const metadata: Metadata = {
   title: 'Gayatri Travels Web',
   description: 'Gayatri Travels customer portal',
+  viewport: 'width=device-width, initial-scale=1',
 }
 
 export default async function RootLayout({

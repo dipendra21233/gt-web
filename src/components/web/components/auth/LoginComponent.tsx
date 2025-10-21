@@ -28,27 +28,28 @@ export const LoginComponent = () => {
   return (
     <Box
       as="div"
-      className="min-h-screen services-section flex items-center justify-center py-8 px-2 sm:py-12 sm:px-4 lg:py-16 lg:px-6"
+      className="min-h-screen services-section flex items-center justify-center py-6 px-4 sm:py-8 sm:px-6 lg:py-16 lg:px-8"
     >
       <Box
         as="div"
-        className="h-[450px] xs:h-[500px] sm:h-[550px] lg:h-[600px] grid grid-cols-1 lg:grid-cols-2 w-full max-w-6xl bg-white shadow-2xl rounded-2xl overflow-hidden relative z-10"
+        className="w-full max-w-6xl bg-white shadow-2xl rounded-2xl overflow-hidden relative z-10 grid grid-cols-1 lg:grid-cols-2 mx-2 sm:mx-4 lg:mx-0"
         sx={{
           boxShadow: '0 25px 50px -12px rgba(252, 121, 13, 0.25), 0 0 0 1px rgba(255, 123, 0, 0.1)',
           backdropFilter: 'blur(10px)',
-          minHeight: ['450px', '500px', '550px', '600px'],
-          maxHeight: ['450px', '500px', '550px', '600px'],
+          minHeight: ['auto', 'auto', '550px', '600px'],
+          maxHeight: ['none', 'none', '550px', '600px'],
         }}
       >
+        {/* Image section - hidden on mobile and tablet */}
         <Box
           as="div"
-          className="lg:block relative overflow-hidden h-[450px] xs:h-[500px] sm:h-[550px] lg:h-[600px]"
+          className="hidden lg:block relative overflow-hidden lg:h-[600px]"
           sx={{
             background: 'linear-gradient(135deg, #ffbe9d 0%, #fc790d66 50%, #ffbe9d 100%)',
             borderTopLeftRadius: '16px',
             borderBottomLeftRadius: '16px',
-            minHeight: ['450px', '500px', '550px', '600px'],
-            maxHeight: ['450px', '500px', '550px', '600px'],
+            minHeight: ['0', '0', '0', '600px'],
+            maxHeight: ['0', '0', '0', '600px'],
           }}
         >
           <Image
@@ -65,13 +66,16 @@ export const LoginComponent = () => {
             id="flightBook"
           />
         </Box>
+        
+        {/* Form section */}
         <Box
           as="div"
-          className={`p-4 sm:p-[30px] position-relative h-[450px] xs:h-[500px] sm:h-[550px] lg:h-[600px] overflow-y-auto`}
+          className={`p-4 sm:p-6 lg:p-[30px] position-relative overflow-y-auto`}
           sx={{
             background: 'linear-gradient(180deg, #ffffff 0%, #fefefe 100%)',
-            minHeight: ['450px', '500px', '550px', '600px'],
-            maxHeight: ['450px', '500px', '550px', '600px'],
+            minHeight: ['auto', 'auto', '550px', '600px'],
+            maxHeight: ['none', 'none', '550px', '600px'],
+            borderRadius: ['16px', '16px', '16px', '0 16px 16px 0'],
             '&::-webkit-scrollbar': {
               width: '4px',
             },
@@ -90,7 +94,7 @@ export const LoginComponent = () => {
         >
           <MobileEmailTab activeTab={values?.activeTab as TabType} onTabChange={(tab) => updateFormField('activeTab', tab)} />
 
-          <div className='flex flex-col gap-2'>
+          <div className='flex flex-col gap-3 sm:gap-4'>
             {values?.activeTab === 'email' ? (
               <TextInputField
                 label='Email'
@@ -176,8 +180,8 @@ export const LoginComponent = () => {
             />
           </div>
 
-          <Box my='14px' className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-start gap-2">
+          <Box my='16px' className="p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start gap-2 sm:gap-3">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="#3B82F6" className="mt-0.5 flex-shrink-0">
                 <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
               </svg>
@@ -185,7 +189,7 @@ export const LoginComponent = () => {
                 variant="Maison12Regular20"
                 sx={{
                   color: '#1E40AF',
-                  fontSize: '12px',
+                  fontSize: ['11px', '11px', '12px', '12px'],
                   lineHeight: '1.4',
                 }}
               >
@@ -194,17 +198,17 @@ export const LoginComponent = () => {
             </div>
           </Box>
 
-          <Box mt='16px'>
+          <Box mt='20px' className="px-1">
             <ThemeButton
               text={translation?.LOGIN}
-              className="w-full py-3 text-base font-medium"
+              className="w-full py-3 sm:py-4 text-sm sm:text-base font-medium"
               disabled={!values?.consentAccepted || false}
               onClick={onSubmit}
               isLoading={isPending || isForgotPasswordPending}
               sx={{
-                fontSize: '14px',
+                fontSize: ['14px', '14px', '16px', '16px'],
                 fontWeight: '600',
-                padding: '12px 20px',
+                padding: ['12px 16px', '12px 16px', '14px 20px', '14px 20px'],
                 borderRadius: '10px',
                 boxShadow: '0 4px 12px rgba(255, 123, 0, 0.3)',
                 '&:hover': {
@@ -215,12 +219,13 @@ export const LoginComponent = () => {
               }}
             />
           </Box>
-          <Box as="div" className="text-center pt-4 border-t border-gray-100">
+          <Box as="div" className="text-center pt-4 sm:pt-6 border-t border-gray-100">
             <Text
               variant="Maison16Regular20"
               sx={{
                 color: '#666',
                 marginBottom: '12px',
+                fontSize: ['14px', '14px', '16px', '16px'],
                 '& a': {
                   color: '#ff7b00',
                   textDecoration: 'none',
@@ -241,8 +246,6 @@ export const LoginComponent = () => {
                 {translation?.CREATE_AN_ACCOUNT}
               </Link>
             </Text>
-
-
           </Box>
           <VerifyOtpModal isOpen={values?.isShowOtp as boolean} onClose={() => updateFormField('isShowOtp', false)} wrapperClass='w-full' values={values} />
         </Box>

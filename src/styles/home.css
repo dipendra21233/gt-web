@@ -666,7 +666,7 @@
 
 /* Modern Services Section */
 .services-section {
-  padding: 80px 0;
+  padding: 80px 16px;
   background: #fef7f0;
   backdrop-filter: blur(5px);
   position: relative;
