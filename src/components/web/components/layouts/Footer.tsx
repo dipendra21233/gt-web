@@ -19,25 +19,26 @@ const Footer = () => {
   return (
     <footer className="modern-footer">
       <div className="modern-footer-content">
-        <div className="container mx-auto px-6 md:px-12 lg:px-20">
+        <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-20">
           {/* Top Footer Sections */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 lg:gap-12 mb-8 sm:mb-10 lg:mb-12">
             {/* Logo and Company Info */}
             <div className="modern-footer-section">
-              <Link href="/" className="logo mb-6 block">
+              <Link href="/" className="logo mb-4 sm:mb-6 block">
                 <Image
                   src={gtLogo}
                   alt="Gayatri Travels Logo"
                   width={150}
                   height={60}
+                  className="w-32 h-12 sm:w-36 sm:h-14 md:w-40 md:h-16"
                 />
               </Link>
-              <p className="text-gray-300 leading-relaxed mb-4">
+              <p className="text-gray-300 leading-relaxed mb-3 sm:mb-4 text-sm sm:text-base">
                 Your trusted travel partner for amazing destinations with the
                 best prices, exclusive deals, and seamless booking experience.
               </p>
-              <div className="flex items-center gap-2 text-sm text-gray-400">
-                <MapPin size={16} />
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-400">
+                <MapPin size={14} className="sm:w-4 sm:h-4" />
                 <span>Serving travelers worldwide since 2016</span>
               </div>
             </div>

@@ -50,7 +50,17 @@ const TripTypeSelector = ({
             />
             <div className="trip-type-content">
               <span className="trip-type-icon">{trip.icon}</span>
-              <Text sx={{ fontSize: '14px' }} variant='Maison16Medium20' color={tripType === trip.value ? 'white' : 'primary_text_dark'}>{trip.label}</Text>
+              <Text 
+                sx={{ 
+                  fontSize: ['11px', '12px', '13px'],
+                  fontWeight: 500,
+                  lineHeight: 1.2
+                }} 
+                variant='Maison16Medium20' 
+                color={tripType === trip.value ? 'white' : 'primary_text_dark'}
+              >
+                {trip.label}
+              </Text>
             </div>
           </label>
         ))}

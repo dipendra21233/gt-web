@@ -395,8 +395,8 @@
   background: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(20px);
   border: 2px solid rgba(255, 255, 255, 0.6);
-  padding: 24px;
-  border-radius: 20px;
+  padding: 16px;
+  border-radius: 16px;
   transition: all 0.4s ease;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
   position: relative;
@@ -406,11 +406,39 @@
   height: fit-content;
 }
 
+@media (min-width: 640px) {
+  .flight-search-card {
+    padding: 20px;
+    border-radius: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .flight-search-card {
+    padding: 24px;
+    border-radius: 20px;
+  }
+}
+
 .flight-search-header {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+@media (min-width: 640px) {
+  .flight-search-header {
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .flight-search-header {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
 }
 
 .trip-type-header {
@@ -419,8 +447,22 @@
 
 .passenger-class-header {
   width: 100%;
-  max-width: 400px;
-  align-self: flex-end;
+  max-width: 100%;
+  align-self: stretch;
+}
+
+@media (min-width: 640px) {
+  .passenger-class-header {
+    max-width: 100%;
+    align-self: stretch;
+  }
+}
+
+@media (min-width: 1024px) {
+  .passenger-class-header {
+    max-width: 400px;
+    align-self: flex-end;
+  }
 }
 
 .flight-search-icon {
@@ -444,35 +486,93 @@
 
 .flight-search-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 12px;
-  row-gap: 16px;
+  row-gap: 14px;
+}
+
+@media (min-width: 640px) {
+  .flight-search-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    row-gap: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .flight-search-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    row-gap: 16px;
+  }
 }
 
 .flight-search-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+}
+
+@media (min-width: 640px) {
+  .flight-search-field {
+    gap: 5px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .flight-search-field {
+    gap: 6px;
+  }
 }
 
 .flight-search-label {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.9rem;
+  gap: 4px;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #4a5568;
 }
 
+@media (min-width: 640px) {
+  .flight-search-label {
+    gap: 5px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .flight-search-label {
+    gap: 6px;
+    font-size: 0.9rem;
+  }
+}
+
 .flight-search-input {
-  padding: 12px 16px;
+  padding: 10px 14px;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.8);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #1a202c;
   transition: all 0.3s ease;
   outline: none;
+}
+
+@media (min-width: 640px) {
+  .flight-search-input {
+    padding: 11px 15px;
+    border-radius: 11px;
+    font-size: 0.875rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .flight-search-input {
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+  }
 }
 
 .flight-search-input:focus {
@@ -509,25 +609,42 @@
   box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
 }
 
-/* Responsive adjustments for flight search */
-@media (max-width: 968px) {
-  .flight-search-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
+/* Enhanced responsive adjustments for flight search */
+@media (max-width: 480px) {
   .flight-search-card {
-    padding: 20px;
+    padding: 12px;
+    border-radius: 14px;
   }
-
+  
   .flight-search-header {
-    gap: 8px;
-    margin-bottom: 16px;
+    gap: 6px;
+    margin-bottom: 12px;
   }
+  
+  .flight-search-grid {
+    gap: 10px;
+    row-gap: 12px;
+  }
+  
+  .flight-search-field {
+    gap: 3px;
+  }
+  
+  .flight-search-label {
+    font-size: 0.75rem;
+    gap: 3px;
+  }
+  
+  .flight-search-input {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+  }
+}
 
-  .passenger-class-header {
-    max-width: 100%;
-    align-self: stretch;
+@media (max-width: 640px) {
+  .flight-search-card {
+    margin: 0 8px;
   }
 }
 
@@ -1034,19 +1151,57 @@
 .modern-footer-content {
   position: relative;
   z-index: 2;
-  padding: 60px 0 30px;
+  padding: 40px 0 20px;
+}
+
+@media (min-width: 640px) {
+  .modern-footer-content {
+    padding: 50px 0 25px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .modern-footer-content {
+    padding: 60px 0 30px;
+  }
 }
 
 .modern-footer-section {
-  margin-bottom: 40px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 640px) {
+  .modern-footer-section {
+    margin-bottom: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .modern-footer-section {
+    margin-bottom: 40px;
+  }
 }
 
 .modern-footer-title {
   color: #ffffff;
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 700;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   position: relative;
+}
+
+@media (min-width: 640px) {
+  .modern-footer-title {
+    font-size: 1.25rem;
+    margin-bottom: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .modern-footer-title {
+    font-size: 1.25rem;
+    margin-bottom: 20px;
+  }
 }
 
 .modern-footer-title::after {
@@ -1065,7 +1220,22 @@
   text-decoration: none;
   transition: all 0.3s ease;
   display: block;
-  padding: 4px 0;
+  padding: 3px 0;
+  font-size: 0.875rem;
+}
+
+@media (min-width: 640px) {
+  .modern-footer-link {
+    padding: 4px 0;
+    font-size: 0.9rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .modern-footer-link {
+    padding: 4px 0;
+    font-size: 1rem;
+  }
 }
 
 .modern-footer-link:hover {
@@ -1075,21 +1245,47 @@
 
 .modern-footer-bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 20px 0;
+  padding: 16px 0;
   text-align: center;
   color: #a0aec0;
 }
 
+@media (min-width: 640px) {
+  .modern-footer-bottom {
+    padding: 18px 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .modern-footer-bottom {
+    padding: 20px 0;
+  }
+}
+
 .modern-footer-social {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+}
+
+@media (min-width: 640px) {
+  .modern-footer-social {
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .modern-footer-social {
+    gap: 16px;
+    margin-bottom: 20px;
+  }
 }
 
 .modern-footer-social-link {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.1);
   display: flex;
@@ -1097,6 +1293,20 @@
   justify-content: center;
   color: #cbd5e0;
   transition: all 0.3s ease;
+}
+
+@media (min-width: 640px) {
+  .modern-footer-social-link {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .modern-footer-social-link {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 .modern-footer-social-link:hover {

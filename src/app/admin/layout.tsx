@@ -84,18 +84,20 @@ export default function AdminPageLayout({
           flexDirection: 'column',
           minWidth: 0,
           width: '100%',
+          marginLeft: '0',
+          paddingLeft: '0',
         }}
       >
         <Suspense fallback={<div className="h-16 bg-white border-b border-gray-200 animate-pulse" />}>
           <ModernHeader />
         </Suspense>
         <main
-          className="bg-gradient-to-br from-blue-50 to-indigo-100"
+          className="bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-5 sm:px-[20px] sm:py-[20px] lg:px-[24px] lg:py-[24px]"
           style={{
             flex: 1,
-            padding: '20px 24px',
             overflowY: 'auto',
             width: '100%',
+            marginLeft: '0',
           }}
         >
           <Suspense fallback={<div className="w-full h-96 bg-white rounded-lg animate-pulse" />}>

@@ -152,7 +152,7 @@ const Navbar = () => {
           <div className="navbar-main" style={{ opacity: scrollOpacity }}>
             <Box
               as="div"
-              className="mx-auto flex items-center justify-between py-3 lg:py-4"
+              className="mx-auto flex items-center justify-between py-2 sm:py-3 lg:py-2 px-4 sm:px-6 lg:px-8 xl:px-12"
             >
               {/* Logo Section */}
               <Box as="div" className="flex items-center flex-shrink-0">
@@ -166,7 +166,7 @@ const Navbar = () => {
                     alt="Gayatri Travels Logo"
                     width={100}
                     height={40}
-                    className="logo-image w-20 h-8 sm:w-24 sm:h-10 lg:w-28 lg:h-12"
+                    className="logo-image w-20 h-8 sm:w-24 sm:h-10 md:w-28 md:h-12 lg:w-32 lg:h-14 xl:w-36 xl:h-16"
                     style={{ filter: `brightness(${1.1 * scrollOpacity})` }}
                     priority
                   />
@@ -176,7 +176,7 @@ const Navbar = () => {
               {/* Desktop Navigation Links */}
               <Box
                 as="div"
-                className="hidden lg:flex items-center gap-6 xl:gap-[60px] flex-1 justify-center"
+                className="hidden lg:flex items-center gap-6 xl:gap-8 2xl:gap-[60px] flex-1 justify-center"
               >
                 {navItems?.map((item, index) => (
                   <Link
@@ -227,7 +227,7 @@ const Navbar = () => {
                 <Box as="div" className="hidden lg:flex items-center">
                   <ThemeButton
                     variant="secondary3"
-                    className={`enhanced-login-button text-sm px-4 py-2 lg:px-6 lg:py-3 ${isSticky ? 'sticky-button' : ''}`}
+                    className={`enhanced-login-button text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 lg:px-6 lg:py-3 ${isSticky ? 'sticky-button' : ''}`}
                     onClick={handleClick}
                     text={translation?.SIGNUP_LOGIN}
                     sx={{
