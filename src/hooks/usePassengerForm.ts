@@ -51,7 +51,8 @@ const createValidationSchema = (
               const eighteenYearsAgo = today.subtract(18, 'year')
               
               // Person must be born on or before 18 years ago
-              return dateOfBirth.isSameOrBefore(eighteenYearsAgo, 'day')
+              // Use isBefore including same day by adding one day buffer
+              return dateOfBirth.isBefore(eighteenYearsAgo.add(1, 'day'), 'day')
             }),
           frequentFlierNumber: Yup.string().optional(),
         })

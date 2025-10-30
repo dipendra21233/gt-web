@@ -3,9 +3,10 @@ import { FlightBookingBar } from "@/components/pages/flight-result/FlightBooking
 import FlightSearchForm from "@/components/shared/FlightSearchForm/FlightSearchForm"
 import CommonModal from "@/components/shared/PopupModals/CommonModal"
 import FlightCardSkeleton from "@/components/shared/Skeleton/FlightCardSkeleton"
+import { FlightDetailDrawer } from "@/components/pages/flight-result/FlightDetailsDrawer"
 import { FlightSearchBar } from "@/components/web/components/FlightResult/FlightSearchBar"
 import FlightFiltersPanelNew from "@/components/web/components/FlightResult/NewFlightfilterPanel"
-import { startFlareDetails } from "@/store/actions/flightBooking.action"
+// removed API trigger on Show Details
 import { clearAllFilters, setUserInfo } from "@/store/slice/flight.slice"
 import { Fare, FlightListingDataProps } from "@/types/module/flightSearch"
 import { MainStoreType } from "@/types/store/reducers/main.reducers"
@@ -149,10 +150,10 @@ function FlightResult() {
 
   const dispatch = useDispatch()
   const params = useSearchParams();
-  // const [selectedFlightData, setSelectedFlightData] = useState<FlightListingDataProps | null>(null)
-  // const [selectedFlightFare, setSelectedFlightFare] = useState<Fare | null>(null)
+  const [selectedFlightData, setSelectedFlightData] = useState<FlightListingDataProps | null>(null)
+  const [selectedFlightFare, setSelectedFlightFare] = useState<Fare | null>(null)
 
-  // const [openDrawerModal, setOpenDrawerModal] = useState(false)
+  const [openDrawerModal, setOpenDrawerModal] = useState(false)
   const [isModifyOpen, setIsModifyOpen] = useState(false)
   const [isSearching] = useState(false)
   const [localStorageFlightData, setLocalStorageFlightData] = useState<FlightListingDataProps[]>([])
@@ -166,9 +167,9 @@ function FlightResult() {
   const [hasMoreData, setHasMoreData] = useState(true)
   // Removed unused variables for virtualization (can be added later if needed)
 
-  // const handleCloseDrawer = () => {
-  //   setOpenDrawerModal(false)
-  // }
+  const handleCloseDrawer = () => {
+    setOpenDrawerModal(false)
+  }
 
   // Transform localStorage data to match FlightListingDataProps format
   const transformLocalStorageData = useCallback((storedData: FlightSearchResult[]): FlightListingDataProps[] => {
@@ -405,19 +406,7 @@ function FlightResult() {
 
 
 
-  // Memoized showDetails callback for better performance
-  const handleShowDetails = useCallback((data: Fare) => {
-    console.log("data", data)
-
-    dispatch(startFlareDetails({
-      id: data.priceID,
-      flowType: "SEARCH"
-    }, () => {
-      // setSelectedFlightData(filterFlightData[flightIndex])
-      // setSelectedFlightFare(data)
-      // setOpenDrawerModal(true)
-    }))
-  }, [dispatch])
+  // No external API call on Show Details; handled purely in UI
 
 
   return (
@@ -529,7 +518,12 @@ function FlightResult() {
                         index={index}
                         returnFlight={!!returnFlight}
                         selectedFare={selectedFare as Fare}
-                        onShowDetails={(data: Fare) => handleShowDetails(data)}
+                        onShowDetails={(data: Fare) => {
+                          // Open the drawer with the chosen flight and fare
+                          setSelectedFlightData(flight)
+                          setSelectedFlightFare(data)
+                          setOpenDrawerModal(true)
+                        }}
                       />
                     ))}
 
@@ -690,15 +684,16 @@ function FlightResult() {
           </Box>
 
           {/* Flight Detail Drawer */}
-          {/* {
-            selectedFlightData &&
-            <FlightDetailDrawer
-              open={openDrawerModal}
-              onClose={handleCloseDrawer}
-              flightData={[selectedFlightData]}
-              selectedFlightFare={selectedFlightFare}
-            />
-          } */}
+          {
+            selectedFlightData && (
+              <FlightDetailDrawer
+                open={openDrawerModal}
+                onClose={handleCloseDrawer}
+                flightData={[selectedFlightData]}
+                selectedFlightFare={selectedFlightFare}
+              />
+            )
+          }
         </Box>
       </div>
       {/* Modify Search Modal with reusable form */}

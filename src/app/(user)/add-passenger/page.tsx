@@ -20,6 +20,7 @@ import { getPassengerFareSummary } from "@/store/actions/passangerFareSummary.ac
 import { RootState } from "@/store/store";
 import { FlightBookingPayload } from "@/types/module/flightBooking";
 import { BookingDetails, FlightDetails } from "@/types/module/flightDetails";
+import { validMobileNumberRegex, gstRegex } from "@/utils/regexMatch";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -410,7 +411,23 @@ function AddPassangerForm() {
                                     label="GST Number"
                                     placeholder="GST Number"
                                     value={field.value}
-                                    onChange={field.onChange}
+                                    onChange={(value) => {
+                                      // Allow only A-Z and 0-9, uppercase, and max length 15
+                                      let cleaned = String(value || '')
+                                        .toUpperCase()
+                                        .replace(/[^A-Z0-9]/g, '')
+                                        .slice(0, 15)
+
+                                      // Enforce first two chars as digits if present
+                                      if (cleaned.length >= 1 && /[A-Z]/.test(cleaned[0])) cleaned = `0${cleaned.slice(1)}`
+                                      if (cleaned.length >= 2 && /[A-Z]/.test(cleaned[1])) cleaned = `${cleaned[0]}0${cleaned.slice(2)}`
+
+                                      // Optional final-format guard using GST format
+                                      if (cleaned.length === 15 && !gstRegex.test(cleaned)) {
+                                        // keep value but could be surfaced by schema errors
+                                      }
+                                      field.onChange(cleaned)
+                                    }}
                                     errors={(errors as any)?.gst?.number?.message}
                                     wrapperSx={{ mb: 0 }}
                                   />
@@ -441,7 +458,18 @@ function AddPassangerForm() {
                                     label="GST Phone"
                                     placeholder="GST Phone"
                                     value={field.value}
-                                    onChange={field.onChange}
+                                    onChange={(value) => {
+                                      let cleaned = String(value).replace(validMobileNumberRegex, '');
+                                      if (cleaned.length > 0) {
+                                        if (!/^[6-9]/.test(cleaned)) {
+                                          cleaned = cleaned.slice(1);
+                                        }
+                                      }
+                                      if (cleaned.length > 10) {
+                                        cleaned = cleaned.slice(0, 10);
+                                      }
+                                      field.onChange(cleaned);
+                                    }}
                                     errors={(errors as any)?.gst?.phone?.message}
                                     wrapperSx={{ mb: 0 }}
                                   />
@@ -479,36 +507,7 @@ function AddPassangerForm() {
                               />
                             </Box>
 
-                            <Box as="div" className="flex gap-4 items-end">
-                              <ThemeButton
-                                variant="primary"
-                                className="bg-[#ff7b00] text-white"
-                                onClick={() => {/* Handle Save GST */ }}
-                              >
-                                Save GST
-                              </ThemeButton>
-                              <Controller
-                                name="gst.search"
-                                control={control}
-                                render={({ field }) => (
-                                  <Box as="div" className="flex-1">
-                                    <TextInputField
-                                      placeholder="Enter Phone No or Company"
-                                      value={field.value}
-                                      onChange={field.onChange}
-                                      wrapperSx={{ mb: 0 }}
-                                    />
-                                  </Box>
-                                )}
-                              />
-                              <ThemeButton
-                                variant="primary"
-                                className="bg-[#ff7b00] text-white"
-                                onClick={() => {/* Handle Fetch GST */ }}
-                              >
-                                Fetch GST
-                              </ThemeButton>
-                            </Box>
+                            {/* GST action buttons removed as per requirement */}
                           </Box>
                         </Box>
                       </Box>
@@ -593,7 +592,19 @@ function AddPassangerForm() {
                                     type="tel"
                                     placeholder="Enter mobile number"
                                     value={field.value}
-                                    onChange={field.onChange}
+                                    // onChange={field.onChange}
+                                    onChange={(value) => {
+                                      let cleaned = String(value).replace(validMobileNumberRegex, '');
+                                      if (cleaned.length > 0) {
+                                        if (!/^[6-9]/.test(cleaned)) {
+                                          cleaned = cleaned.slice(1);
+                                        }
+                                        if (cleaned.length > 10) {
+                                          cleaned = cleaned.slice(0, 10);
+                                        }
+                                      }
+                                      field.onChange(cleaned);
+                                    }}
                                     label="Mobile No*"
                                     errors={errors.contactDetails?.mobile?.message}
                                     wrapperSx={{ mb: 0 }}
