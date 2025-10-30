@@ -56,6 +56,7 @@ export interface RouteInfosProps {
     code: string
   }
   travelDate?: string
+  returnDate?: string
 }
 
 export interface AirportDataItemsProps {

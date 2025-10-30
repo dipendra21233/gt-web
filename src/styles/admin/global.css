@@ -5990,13 +5990,13 @@ a.fc-event:not([href]) {
 .fc-toolbar h2 {
   font-size: 18px;
   font-weight: 600;
-  font-family: 'Maison', 'Rubik', sans-serif;
+  font-family: 'Maison', sans-serif;
   line-height: 30px;
   text-transform: uppercase;
 }
 
 .fc-day-grid-event .fc-time {
-  font-family: 'Maison', 'Rubik', sans-serif;
+  font-family: 'Maison', sans-serif;
 }
 
 .fc-day {
@@ -6083,13 +6083,13 @@ a.fc-event:not([href]) {
 .fc-basic-view td.fc-week-number span {
   padding-right: 8px;
   font-weight: 700;
-  font-family: 'Maison', 'Rubik', sans-serif;
+  font-family: 'Maison', sans-serif;
 }
 
 .fc-basic-view td.fc-day-number {
   padding-right: 8px;
   font-weight: 700;
-  font-family: 'Maison', 'Rubik', sans-serif;
+  font-family: 'Maison', sans-serif;
 }
 
 /*-----------------

@@ -88,17 +88,6 @@ export default async function RootLayout({
     <html lang="en" className={Maison.className}>
       <ThemeProvider>
         <head>
-          <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link
-            rel="preconnect"
-            href="https://fonts.gstatic.com"
-            crossOrigin=""
-          />
-          <link
-            href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@100..1000&display=swap"
-            rel="stylesheet"
-          />
-
         </head >
         <body>
           <QueryProvider>

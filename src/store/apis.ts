@@ -141,6 +141,14 @@ export const setFlightSearchRequestApi = (
     data
   )
 }
+export const setNexusFlightSearchRequestApi = (
+  data: SearchQueryPayload
+): Promise<AxiosResponse> => {
+  return NetworkClient.post(
+    `${process.env.NEXT_PUBLIC_API_URL}api/v1/flights/nexus/search/nexus`,
+    data
+  )
+}
 
 export const getBookingsDataApi = (
   data: MyBookingsRequestData,

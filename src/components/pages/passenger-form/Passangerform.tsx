@@ -2,6 +2,7 @@ import DateInputField from "@/components/shared/TextInputField/DateInputField";
 import { TextInputField } from "@/components/shared/TextInputField/TextInputField";
 import { SelectInputField } from "@/components/web/core/SelectInputField/SelectInputField";
 import { validMobileNumberRegex } from "@/utils/regexMatch";
+import dayjs from "dayjs";
 import { memo } from "react";
 import { Control, Controller, FieldErrors } from "react-hook-form";
 import { Box, Divider, Text } from "theme-ui";
@@ -231,6 +232,13 @@ const PassangerformComponent = ({
                     }}
                     errors={(errors.adults as any)?.[index]?.dateOfBirth?.message || ''}
                     wrapperSx={{ mb: 0 }}
+                    disabledDate={(date) => {
+                      // Disable dates that would make the person under 18 years old
+                      const today = dayjs()
+                      const eighteenYearsAgo = today.subtract(18, 'year')
+                      // Disable dates after 18 years ago (i.e., dates that are too recent)
+                      return date.isAfter(eighteenYearsAgo, 'day')
+                    }}
                   />
                 )}
               />

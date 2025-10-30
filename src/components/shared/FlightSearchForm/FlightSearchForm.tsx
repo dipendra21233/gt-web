@@ -7,7 +7,7 @@ import TripTypeSelector, { TripType } from '@/components/shared/TripTypeSelector
 import '@/components/shared/TripTypeSelector/TripTypeSelector.css'
 import { NoFlightFoundDialog } from '@/components/web/components/FlightSelectCard/NoflightFoundDialoge'
 import { ThemeButton } from '@/components/web/core/Button/Button'
-import { useFlightSearchRequestMutation } from '@/hooks/useMutations'
+import { useSequentialFlightSearchMutation } from '@/hooks/useMutations'
 import { AirportDataItemsProps, CabinClass } from '@/types/module/flightSearch'
 import { MAX_SEARCH_RESULTS, POPULAR_AIRPORTS_COUNT, SEARCH_DEBOUNCE_MS } from '@/utils/constant'
 import { storeFlightSearchResults } from '@/utils/flightStorageUtils'
@@ -93,7 +93,7 @@ const convertToOptions = (airports: AirportDataItemsProps[]): AirportOption[] =>
 const FlightSearchForm = ({ className = '', initial, onSearchSuccess }: FlightSearchFormProps) => {
   const router = useRouter()
   const [noFlightFound, setNoFlightFound] = useState(false)
-  const { mutate: flightSearchRequestMutation, isPending } = useFlightSearchRequestMutation()
+  const { mutate: flightSearchRequestMutation, isPending } = useSequentialFlightSearchMutation()
   const [allAirportsData, setAllAirportsData] = useState<AirportDataItemsProps[]>([])
   const [loadedAirports, setLoadedAirports] = useState<AirportOption[]>([])
   const [isSelectDateModalOpen, setIsSelectDateModalOpen] = useState(false)
@@ -187,7 +187,7 @@ const FlightSearchForm = ({ className = '', initial, onSearchSuccess }: FlightSe
   }, [])
 
   const onSubmit = () => {
-    flightSearchRequestMutation({
+    const payload = {
       searchQuery: {
         paxInfo: {
           ADULT: formValues.passengers.adults.toString(),
@@ -200,6 +200,7 @@ const FlightSearchForm = ({ className = '', initial, onSearchSuccess }: FlightSe
             fromCityOrAirport: { code: formValues.from?.value || '' },
             toCityOrAirport: { code: formValues.to?.value || '' },
             travelDate: formValues.departureDate,
+            returnDate: formValues.returnDate,
           },
         ],
         searchModifiers: {
@@ -207,22 +208,24 @@ const FlightSearchForm = ({ className = '', initial, onSearchSuccess }: FlightSe
           isDirectFlight: true,
         },
       },
-    }, {
-      onSuccess: (data) => {
-        console.log(data?.data, 'check182')
+    }
+
+    flightSearchRequestMutation(payload)
+      .then((data: any) => {
+        console.log(data?.data, 'Sequential flight search completed')
+        console.log('Nexus data:', data?.nexusData)
+        
         if (data?.status === 200 && data?.data?.length === 0) {
           setNoFlightFound(true)
         } else if (data?.status === 200 && data?.data?.length > 0) {
-          storeFlightSearchResults(data?.data)
           const depDate = parseLocalYMD(formValues.departureDate)
           router.push(`/flights-search?from=${formValues.from?.value}&to=${formValues.to?.value}&depature=${formatDateToDDMMYYYY(depDate || null)}&adults=${formValues.passengers.adults}&child=${formValues.passengers.children}&infants=${formValues.passengers.infants}&class=${formValues.travelClass}`)
           if (onSearchSuccess) onSearchSuccess()
         }
-      },
-      onError: () => {
-        console.log('error')
-      }
-    })
+      })
+      .catch((error: any) => {
+        console.error('Sequential flight search error:', error)
+      })
   }
 
   const handleAirportChange = useCallback((field: 'from' | 'to', selectedOption: AirportOption | null) => {

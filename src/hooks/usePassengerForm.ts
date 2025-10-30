@@ -1,5 +1,6 @@
 import { PassengerFormValues } from '@/types/module/commonModule'
 import { yupResolver } from '@hookform/resolvers/yup'
+import dayjs from 'dayjs'
 import { useCallback, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import * as Yup from 'yup'
@@ -19,7 +20,39 @@ const createValidationSchema = (
           lastName: Yup.string().required('Last name is required'),
           email: Yup.string().email('Invalid email format').optional(),
           mobile: Yup.string().optional(),
-          dateOfBirth: Yup.string().required('Date of birth is required'),
+          dateOfBirth: Yup.string()
+            .required('Date of birth is required')
+            .test('minimum-age', 'Adult passengers must be at least 18 years old', function (value) {
+              if (!value) return true // Required validation is handled above
+              
+              // Try to parse the date in common formats
+              let dateOfBirth: dayjs.Dayjs | null = null
+              const formats = ['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'DD-MM-YYYY', 'MM-DD-YYYY']
+              
+              for (const format of formats) {
+                const parsed = dayjs(value, format, true)
+                if (parsed.isValid()) {
+                  dateOfBirth = parsed
+                  break
+                }
+              }
+              
+              // If still not valid, try default parsing
+              if (!dateOfBirth) {
+                dateOfBirth = dayjs(value)
+                if (!dateOfBirth.isValid()) {
+                  return false
+                }
+              }
+              
+              // Check if the person is at least 18 years old
+              // Calculate the date 18 years ago from today
+              const today = dayjs()
+              const eighteenYearsAgo = today.subtract(18, 'year')
+              
+              // Person must be born on or before 18 years ago
+              return dateOfBirth.isSameOrBefore(eighteenYearsAgo, 'day')
+            }),
           frequentFlierNumber: Yup.string().optional(),
         })
       )
