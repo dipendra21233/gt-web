@@ -13,17 +13,20 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ThemeButton } from "@/components/web/core/Button/Button";
-import { useFlightBookingApiMutation, useGetReviewFlightDetailsMutation } from "@/hooks/useMutations";
+import { useFlightBookingApiMutation, useGetPassengerFareSummaryNexusMutation, useGetReviewFlightDetailsMutation } from "@/hooks/useMutations";
 import { usePassengerForm } from "@/hooks/usePassengerForm";
 import { flightBookingRequest } from "@/store/actions/flightBooking.action";
 import { getPassengerFareSummary } from "@/store/actions/passangerFareSummary.action";
+import { setPassengerFareSummary, setPassengerFareSummaryLoading, stopPassengerFareSummaryLoading } from "@/store/slice/passangerFareSummary.slice";
+import { transformNexusFareSummaryResponse } from "@/serializer/flightSearch.serializer";
+import { FlightPriceRequest } from "@/types/module/fareSummarModule";
 import { RootState } from "@/store/store";
 import { FlightBookingPayload } from "@/types/module/flightBooking";
 import { BookingDetails, FlightDetails } from "@/types/module/flightDetails";
 import { validMobileNumberRegex, gstRegex } from "@/utils/regexMatch";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Controller } from "react-hook-form";
 import {
   FaCoins,
@@ -82,6 +85,7 @@ function AddPassangerForm() {
   // Initialize the flight booking mutation
   const flightBookingMutation = useFlightBookingApiMutation();
   const getReviewFlightDetailsMutation = useGetReviewFlightDetailsMutation();
+  const getPassengerFareSummaryNexusMutation = useGetPassengerFareSummaryNexusMutation();
 
   // Function to map form data to FlightBookingPayload
   const createFlightBookingPayload = (
@@ -256,13 +260,94 @@ function AddPassangerForm() {
     });
   };
 
+  const fetchedKeyRef = useRef<string | null>(null);
+
   useEffect(() => {
-    console.log("priceIds inside useEffect", priceIds)
-    if (priceIds) {
-      console.log("priceIds", priceIds)
-      dispatch(getPassengerFareSummary([priceIds], (response) => {
-        console.log("response", response)
-      }));
+    if (!priceIds) return;
+
+    // Determine supplier by matching priceId in localStorage flightSearchResults
+    const ids = priceIds.split(',');
+    const firstId = ids[0];
+    let supplier: 'NEXUS' | 'TRIPJAC' | undefined;
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('flightSearchResults') : null;
+      if (raw) {
+        const results = JSON.parse(raw) as Array<{ supplier?: 'NEXUS' | 'TRIPJAC'; fares?: Array<{ priceID?: string; priceId?: string }> }>;
+        const found = results.find((r) => Array.isArray(r?.fares) && r.fares.some((f: any) => (f?.priceID || f?.priceId) === firstId));
+        supplier = (found as any)?.supplier;
+      }
+      if (!supplier && typeof window !== 'undefined') {
+        const lsSupplier = localStorage.getItem('supplier');
+        if (lsSupplier === 'NEXUS' || lsSupplier === 'TRIPJAC') supplier = lsSupplier;
+      }
+    } catch (e) {
+      // fallback to default flow
+    }
+
+    const fetchKey = `${supplier || 'TRIPJAC'}|${ids.join(',')}`;
+    if (fetchedKeyRef.current === fetchKey) return;
+
+    if (supplier === 'NEXUS') {
+      // Build minimal FlightPriceRequest payload
+      const payload: FlightPriceRequest = {
+        priceIds: ids,
+        query: {
+          nAdt: 1,
+          nInf: 0,
+          nChd: 0,
+          legs: (() => {
+            try {
+              const raw = typeof window !== 'undefined' ? localStorage.getItem('flightSearchResults') : null;
+              if (raw) {
+                const results = JSON.parse(raw) as any[];
+                const match = results.find((r) => Array.isArray(r?.fares) && r.fares.some((f: any) => (f?.priceID || f?.priceId) === firstId));
+                const seg = match?.segments?.[0];
+                const dep = (seg?.departureTime || '').split('T')?.[0];
+                const [y, m, d] = (dep || '').split('-');
+                const ddmmyyyy = d && m && y ? `${d}/${m}/${y}` : '';
+                return [{ src: seg?.from || '', dst: seg?.to || '', dep: ddmmyyyy }];
+              }
+            } catch {}
+            return [{ src: '', dst: '', dep: '' }];
+          })(),
+        },
+        total_price: (() => {
+          try {
+            const raw = typeof window !== 'undefined' ? localStorage.getItem('flightSearchResults') : null;
+            if (raw) {
+              const results = JSON.parse(raw) as any[];
+              const match = results.find((r) => Array.isArray(r?.fares) && r.fares.some((f: any) => (f?.priceID || f?.priceId) === firstId));
+              if (match) {
+                const matchedFare = match.fares?.find((f: any) => (f?.priceID || f?.priceId) === firstId);
+                if (matchedFare?.totalFare !== undefined) {
+                  return typeof matchedFare.totalFare === 'number' ? matchedFare.totalFare : Number(matchedFare.totalFare) || 0;
+                }
+              }
+            }
+          } catch {}
+          return 0;
+        })(),
+        currency: 'INR',
+      };
+
+      dispatch(setPassengerFareSummaryLoading('passengerFareSummary/getPassengerFareSummary'));
+      getPassengerFareSummaryNexusMutation.mutate(payload, {
+        onSuccess: (res: any) => {
+          // Transform Nexus response to expected format, enriching with localStorage data
+          const transformed = transformNexusFareSummaryResponse(res, ids);
+          dispatch(setPassengerFareSummary(transformed));
+          fetchedKeyRef.current = fetchKey;
+        },
+        onError: () => {
+          // no-op; keep existing state
+        },
+        onSettled: () => {
+          dispatch(stopPassengerFareSummaryLoading('passengerFareSummary/getPassengerFareSummary'));
+        }
+      });
+    } else {
+      dispatch(getPassengerFareSummary([priceIds], () => {}));
+      fetchedKeyRef.current = fetchKey;
     }
   }, [dispatch, priceIds]);
 

@@ -23,6 +23,7 @@ import { SearchQueryPayload } from '@/types/module/flightSearch'
 import { UploadBalanceDataProps } from '@/types/module/paymentMethods'
 import { AxiosResponse } from 'axios'
 import NetworkClient from './NetworkClient'
+import { FlightPriceRequest } from '@/types/module/fareSummarModule'
 
 const generateApiUrl = (path: string, params?: Record<string, string>) => {
   const url = new URL(path, process.env.NEXT_PUBLIC_API_URL)
@@ -312,6 +313,16 @@ export const getPassengerFareSummaryApi = (
   return NetworkClient.post(
     `${process.env.NEXT_PUBLIC_API_URL}api/v1/flights/passenger-fare-summary`,
     { priceId: data }
+  )
+}
+
+
+export const getPassengerFareSummaryNexusApi = (
+  data: FlightPriceRequest
+): Promise<AxiosResponse> => {
+  return NetworkClient.post(
+    `${process.env.NEXT_PUBLIC_API_URL}api/v1/flights/nexus/fare-summary/nexus`,
+    data
   )
 }
 
