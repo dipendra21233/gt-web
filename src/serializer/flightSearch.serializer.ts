@@ -1,4 +1,4 @@
-export type Supplier = 'NEXUS' | 'TRIPJAC'
+export type Supplier = 'NEXUS' | 'TRIPJACK'
 
 export interface LocalStorageFlightSegment {
   flightCode: string
@@ -447,6 +447,7 @@ export const transformNexusFareSummaryResponse = (
         ],
         totalAmount: totalPrice,
       },
+      supplier: 'NEXUS',
     }
 
     return transformed

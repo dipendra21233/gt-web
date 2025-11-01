@@ -12,6 +12,7 @@ import {
   setFlightSearchRequestApi,
   setNexusFlightSearchRequestApi,
   updateFlightBookingApi,
+  updateFlightBookingNexusApi,
   updatePaymentStatusApi,
   verifyOtpApi,
 } from '@/store/apis'
@@ -129,6 +130,52 @@ export function useSequentialFlightSearchMutation() {
     try {
       // First API call with full payload (including searchModifiers)
       const firstResponse = await flightSearchMutation.mutateAsync(payload)
+      
+      // Extract supplier from the first API response
+      const extractSupplierFromResponse = (responseData: any): 'TRIPJACK' | 'NEXUS' => {
+        try {
+          // Handle array of flight items
+          if (Array.isArray(responseData)) {
+            for (const item of responseData) {
+              if (item?.segments && Array.isArray(item.segments) && item.segments.length > 0) {
+                const supplier = item.segments[0]?.supplier
+                if (supplier === 'TRIPJACK' || supplier === 'NEXUS') {
+                  return supplier
+                }
+              }
+            }
+          }
+          // Handle single object with segments array
+          else if (responseData?.segments && Array.isArray(responseData.segments) && responseData.segments.length > 0) {
+            const supplier = responseData.segments[0]?.supplier
+            if (supplier === 'TRIPJACK' || supplier === 'NEXUS') {
+              return supplier
+            }
+          }
+          // Handle nested data structure (e.g., responseData.data)
+          else if (responseData?.data) {
+            if (Array.isArray(responseData.data) && responseData.data.length > 0) {
+              const firstItem = responseData.data[0]
+              if (firstItem?.segments && Array.isArray(firstItem.segments) && firstItem.segments.length > 0) {
+                const supplier = firstItem.segments[0]?.supplier
+                if (supplier === 'TRIPJACK' || supplier === 'NEXUS') {
+                  return supplier
+                }
+              }
+            } else if (responseData.data?.segments && Array.isArray(responseData.data.segments) && responseData.data.segments.length > 0) {
+              const supplier = responseData.data.segments[0]?.supplier
+              if (supplier === 'TRIPJACK' || supplier === 'NEXUS') {
+                return supplier
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error extracting supplier from response:', e)
+        }
+        return 'TRIPJACK' // Default fallback
+      }
+      
+      const tripjackSupplier = extractSupplierFromResponse(firstResponse?.data)
       
       // Transform Nexus response to match the localStorage FlightSearchResult format
       const transformNexusResponse = (nexusData: any) => {
@@ -259,17 +306,20 @@ export function useSequentialFlightSearchMutation() {
       const secondResponse = await nexusFlightSearchMutation.mutateAsync(nexusPayload)
       
       // Transform and combine results
-      const tripjacResults = attachSupplierToLocalResults(firstResponse?.data, 'TRIPJAC')
+      const tripjackResults = attachSupplierToLocalResults(firstResponse?.data, tripjackSupplier)
       const transformedNexusResults = transformNexusResponseToLocalFormat(secondResponse)
       const combinedResults = [
-        ...tripjacResults,
+        ...tripjackResults,
         ...transformedNexusResults
       ]
+
+      // Determine which supplier to store (prefer the one with results, or TRIPJACK if both empty)
+      const supplierToStore = transformedNexusResults.length > 0 ? 'NEXUS' : tripjackSupplier
 
       // Store combined results in localStorage
       if (typeof window !== 'undefined') {
         localStorage.setItem('flightSearchResults', JSON.stringify(combinedResults))
-        localStorage.setItem('supplier', transformedNexusResults.length > 0 ? 'NEXUS' : 'TRIPJAC')
+        localStorage.setItem('supplier', supplierToStore)
       }
 
       return {
@@ -348,6 +398,27 @@ export function useFlightBookingApiMutation() {
     onSuccess: (data) => {
       if (data?.data?.bookingId) {
         window.location.href = data?.data?.redirectUrl
+      }
+    },
+    onError(error: AxiosError<AxiosErrorResponse>) {
+      if (error.response) {
+        const errorMessage = error.response?.data?.message
+        showErrorToast(errorMessage)
+      }
+    },
+  })
+}
+export function useNexusFlightBookingApiMutation() {
+  return useMutation({
+    mutationKey: ['updateFlightBookingNexus'],
+    mutationFn: async (payload: FlightBookingPayload) => {
+      return updateFlightBookingNexusApi(payload)
+    },
+    onSuccess: (data) => {
+      // Try to get redirectUrl from common response shapes
+      const redirectUrl = data?.data?.data?.redirectUrl || data?.data?.redirectUrl || (data as any)?.redirectUrl;
+      if (redirectUrl && typeof window !== 'undefined') {
+        window.location.assign(redirectUrl);
       }
     },
     onError(error: AxiosError<AxiosErrorResponse>) {

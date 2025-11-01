@@ -7,6 +7,8 @@ import { memo } from "react";
 import { Control, Controller, FieldErrors } from "react-hook-form";
 import { Box, Divider, Text } from "theme-ui";
 
+import { useIsMobile } from "@/hooks/use-mobile";
+
 const modernCardStyle = {
   background: "#fff",
   borderRadius: "16px",
@@ -63,6 +65,7 @@ const PassangerformComponent = ({
   childCount?: number;
   infantCount?: number;
 }) => {
+  const isMobile = useIsMobile();
 
   const titleOptions = [
     { value: '', label: 'Select Title' },
@@ -82,14 +85,18 @@ const PassangerformComponent = ({
     <Box as="div" sx={{ width: "100%" }}>
       {/* Adults */}
       {Array.from({ length: adultCount }).map((_, index) => (
-        <Box as="div" key={`adult-${index}`} sx={modernCardStyle}>
-          <Box as="div" sx={{ padding: "12px 20px" }}>
-            <Text mt={2} variant="Maison18Demi125" color="orange_accent_alpha">Adult Passenger {index + 1}</Text>
+        <Box as="div" key={`adult-${index}`} sx={{
+          ...modernCardStyle,
+          marginBottom: isMobile ? "1rem" : "1.5rem",
+          borderRadius: isMobile ? "12px" : "16px",
+        }}>
+          <Box as="div" sx={{ padding: isMobile ? "10px 16px" : "12px 20px" }}>
+            <Text mt={isMobile ? 1 : 2} variant="Maison18Demi125" color="orange_accent_alpha" sx={{ fontSize: isMobile ? "16px" : undefined }}>Adult Passenger {index + 1}</Text>
           </Box>
           <Divider color="#c5c5c591" />
-          <Box as="div" sx={modernContentStyle}>
+          <Box as="div" sx={{ padding: isMobile ? "1rem" : "1.5rem" }}>
 
-            <Box as="div" className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Box as="div" className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-1 md:grid-cols-3 gap-4'}`}>
               <Controller
                 name={`adults.${index}.title`}
                 control={control}
@@ -249,19 +256,26 @@ const PassangerformComponent = ({
 
       {/* Children */}
       {Array.from({ length: childCount }).map((_, index) => (
-        <Box as="div" key={`child-${index}`} sx={modernCardStyle}>
-          <Box as="div" sx={modernHeaderStyle}>
+        <Box as="div" key={`child-${index}`} sx={{
+          ...modernCardStyle,
+          marginBottom: isMobile ? "1rem" : "1.5rem",
+          borderRadius: isMobile ? "12px" : "16px",
+        }}>
+          <Box as="div" sx={{
+            ...modernHeaderStyle,
+            padding: isMobile ? "0.75rem 1rem" : "1rem 1.5rem",
+          }}>
             <Box
               as="div"
               sx={{
-                width: "40px",
-                height: "40px",
+                width: isMobile ? "32px" : "40px",
+                height: isMobile ? "32px" : "40px",
                 borderRadius: "50%",
                 background: "rgba(255, 255, 255, 0.2)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "1.1rem",
+                fontSize: isMobile ? "0.9rem" : "1.1rem",
                 fontWeight: 700,
                 color: "#ffffff",
                 textShadow: "0 1px 2px rgba(0,0,0,0.1)",
@@ -271,14 +285,17 @@ const PassangerformComponent = ({
               👶
             </Box>
             <Box as="div" sx={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              <Text sx={modernSectionTitle}>Child Passenger {index + 1}</Text>
-              <Text sx={{ fontSize: "0.875rem", color: "rgba(255, 255, 255, 0.9)", fontWeight: 400 }}>
+              <Text sx={{
+                ...modernSectionTitle,
+                fontSize: isMobile ? "16px" : undefined,
+              }}>Child Passenger {index + 1}</Text>
+              <Text sx={{ fontSize: isMobile ? "0.75rem" : "0.875rem", color: "rgba(255, 255, 255, 0.9)", fontWeight: 400 }}>
                 Child traveler information (2-11 years)
               </Text>
             </Box>
           </Box>
-          <Box as="div" sx={modernContentStyle}>
-            <Box as="div" className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Box as="div" sx={{ padding: isMobile ? "1rem" : "1.5rem" }}>
+            <Box as="div" className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-1 md:grid-cols-3 gap-4'}`}>
               <Controller
                 name={`children.${index}.title`}
                 control={control}
@@ -410,19 +427,26 @@ const PassangerformComponent = ({
 
       {/* Infants */}
       {Array.from({ length: infantCount }).map((_, index) => (
-        <Box as="div" key={`infant-${index}`} sx={modernCardStyle}>
-          <Box as="div" sx={modernHeaderStyle}>
+        <Box as="div" key={`infant-${index}`} sx={{
+          ...modernCardStyle,
+          marginBottom: isMobile ? "1rem" : "1.5rem",
+          borderRadius: isMobile ? "12px" : "16px",
+        }}>
+          <Box as="div" sx={{
+            ...modernHeaderStyle,
+            padding: isMobile ? "0.75rem 1rem" : "1rem 1.5rem",
+          }}>
             <Box
               as="div"
               sx={{
-                width: "40px",
-                height: "40px",
+                width: isMobile ? "32px" : "40px",
+                height: isMobile ? "32px" : "40px",
                 borderRadius: "50%",
                 background: "rgba(255, 255, 255, 0.2)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "1.1rem",
+                fontSize: isMobile ? "0.9rem" : "1.1rem",
                 fontWeight: 700,
                 color: "#ffffff",
                 textShadow: "0 1px 2px rgba(0,0,0,0.1)",
@@ -432,14 +456,17 @@ const PassangerformComponent = ({
               🍼
             </Box>
             <Box as="div" sx={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              <Text sx={modernSectionTitle}>Infant Passenger {index + 1}</Text>
-              <Text sx={{ fontSize: "0.875rem", color: "rgba(255, 255, 255, 0.9)", fontWeight: 400 }}>
+              <Text sx={{
+                ...modernSectionTitle,
+                fontSize: isMobile ? "16px" : undefined,
+              }}>Infant Passenger {index + 1}</Text>
+              <Text sx={{ fontSize: isMobile ? "0.75rem" : "0.875rem", color: "rgba(255, 255, 255, 0.9)", fontWeight: 400 }}>
                 Infant traveler information (under 2 years)
               </Text>
             </Box>
           </Box>
-          <Box as="div" sx={modernContentStyle}>
-            <Box as="div" className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Box as="div" sx={{ padding: isMobile ? "1rem" : "1.5rem" }}>
+            <Box as="div" className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-1 md:grid-cols-3 gap-4'}`}>
               <Controller
                 name={`infants.${index}.title`}
                 control={control}

@@ -116,6 +116,8 @@ declare module 'utilsdata' {
           totalFare: { label: string; value: number }[];
           totalAmount: number;
         };
+        
+        supplier?: 'NEXUS' | 'TRIPJACK';
       }
       
       export interface FareDetails {

@@ -6,6 +6,28 @@ export interface FlightBookingPayload {
   payment: Payment
   paymode: string
   flight: Flight
+
+  // ✅ Newly added optional fields
+  query?: FlightQuery
+  flight_keys?: string[]
+  total_price?: number
+  currency?: string
+  agent_reference?: string
+}
+
+// ---- Supporting Types ----
+
+interface FlightQuery {
+  nAdt: number
+  nInf: number
+  nChd: number
+  legs: FlightLeg[]
+}
+
+interface FlightLeg {
+  dst: string
+  src: string
+  dep: string // format: DD/MM/YYYY
 }
 
 interface Traveller {
@@ -15,7 +37,8 @@ interface Traveller {
   pt: 'ADULT' | 'CHILD' | 'INFANT'
   dob: string
   pNum: string
-  eD: string
+  eD?: string // passport expiry date (optional for Nexus)
+  nationality?: string // nationality code (required for Nexus)
 }
 
 interface GSTInfo {

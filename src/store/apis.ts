@@ -343,3 +343,11 @@ export const updateFlightBookingApi = (
     data
   )
 }
+export const updateFlightBookingNexusApi = (
+  data: FlightBookingPayload
+): Promise<AxiosResponse> => {
+  return NetworkClient.post(
+    `${process.env.NEXT_PUBLIC_API_URL}api/v1/nexus/flights/confirm-flight-booking`,
+    data
+  )
+}

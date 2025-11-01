@@ -8,14 +8,17 @@ const CommonDrawerModal: FC<CommonDrawerModalProps> = ({
   children,
   placement,
   loading,
+  className,
   // styles,
   width,
   height,
+  footer,
   ...porps
 }) => {
   return (
     <Drawer
       placement={placement}
+      rootClassName={className}
       loading={loading}
       // styles={styles}
       open={open}
@@ -23,6 +26,18 @@ const CommonDrawerModal: FC<CommonDrawerModalProps> = ({
       height={height}
       // title={title}
       onClose={onClose}
+      classNames={{
+        header:'maison-24-medium-125'
+      }}
+      footer={footer}
+      styles={{
+        header:{
+          // color:'red'
+        }
+      }}
+      style={{
+        backgroundColor: '#fef7f0',
+      }}
 
       {...porps}
     >

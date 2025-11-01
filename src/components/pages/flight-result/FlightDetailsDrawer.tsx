@@ -22,11 +22,32 @@ export function FlightDetailDrawer({ open, onClose, flightData, selectedFlightFa
     }
 
     return (<CommonDrawerModal
+    className="flight-details-drawer"
         placement="right"
         title={translation?.FLIGHT_DETAILS}
         width={"auto"}
         open={open}
         onClose={onClose}
+        footer={
+            <Box className="flex items-center justify-between    border border-gray-100 py-2  px-3">
+            <Box className={"flex flex-col"}>
+                <Text variant="Maison24Demi32" className="text-gray-900 text-2xl font-semibold">
+                    ₹{selectedFlightFare?.totalFare}
+                </Text>
+            </Box>
+            <Box as="div" className="flex justify-start items-center">
+                <ThemeButton
+                    className="book-btn"
+                    variant="secondary3"
+                    sx={{ minWidth: '100px', maxWidth: '120px', width: '100%', }}
+                    text={translation?.BOOK}
+                    onClick={() => {
+                        router.push(`/add-passenger?priceIds=${selectedFlightFare?.priceID}`);
+                    }}
+                />
+            </Box>
+        </Box>
+        }
     >
         <Box className='d-flex justify-between flex-col  h-100'>
             {
@@ -114,24 +135,7 @@ export function FlightDetailDrawer({ open, onClose, flightData, selectedFlightFa
                     </Box>
                 })
             }
-            <Box className="flex items-center justify-between    border border-gray-100 py-2  px-3">
-                <Box className={"flex flex-col"}>
-                    <Text variant="Maison24Demi32" className="text-gray-900 text-2xl font-semibold">
-                        ₹{selectedFlightFare?.totalFare}
-                    </Text>
-                </Box>
-                <Box as="div" className="flex justify-start items-center">
-                    <ThemeButton
-                        className="book-btn"
-                        variant="secondary3"
-                        sx={{ minWidth: '100px', maxWidth: '120px', width: '100%', }}
-                        text={translation?.BOOK}
-                        onClick={() => {
-                            router.push(`/add-passenger?priceIds=${selectedFlightFare?.priceID}`);
-                        }}
-                    />
-                </Box>
-            </Box>
+       
         </Box>
     </CommonDrawerModal>)
 }

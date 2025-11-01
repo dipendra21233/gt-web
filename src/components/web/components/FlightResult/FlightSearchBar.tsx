@@ -8,6 +8,7 @@ import { FaArrowRight, FaExchangeAlt } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import CommonFlightSelectNew from "../FlightSelectCard/CommonFlightSelect";
 import { FlightTreavellerPopover } from "./FlightTreavellerPopover";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 function capitilizedFirst(text: string): string {
@@ -142,17 +143,18 @@ export function FlightSearchBar({
   const buttonColor = "bg-orange-500 hover:bg-orange-600";
   const [open, setOpen] = useState(false);
   const [openTravellar, setOpenTravellar] = useState(false);
+  const isMobile = useIsMobile();
 
 
   return (
     <div className={`rounded-2xl flex flex-col gap-1 w-full max-w-6xl mx-auto `}>
       {/* Main Search Row */}
-      <div className="flex items-center gap-2">
+      <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} items-center gap-2 flex-wrap`}>
         {/* From */}
-        <div className="flex items-center justify-between px-4 py-2 bg-gray-50 rounded grow min-w-[320px] gap-4">
+        <div className={`flex items-center justify-between px-3 md:px-4 py-2 bg-gray-50 rounded ${isMobile ? 'w-full' : 'grow'} ${isMobile ? '' : 'min-w-[320px]'} gap-2 md:gap-4`}>
           <SearchInput label={'from'} code={fromDestination} setInputValue={setFromDestination} disabled={disabled} />
-          <div className="flex items-center justify-center mx-2">
-            <FaExchangeAlt className="text-gray-400 text-lg" />
+          <div className="flex items-center justify-center mx-1 md:mx-2">
+            <FaExchangeAlt className="text-gray-400 text-base md:text-lg" />
           </div>
           <SearchInput label={'to'} code={toDestination} setInputValue={setToDestination} disabled={disabled} />
         </div>
@@ -160,7 +162,7 @@ export function FlightSearchBar({
 
         <Popover open={disabled ? false : open} onOpenChange={disabled ? () => { } : setOpen}>
           <PopoverTrigger asChild>
-            <div className={`flex flex-col px-4 py-2 bg-gray-50  min-w-[120px] ${disabled ? 'pointer-events-none' : ''}`}>
+            <div className={`flex flex-col px-3 md:px-4 py-2 bg-gray-50 ${isMobile ? 'w-full' : 'min-w-[120px]'} ${disabled ? 'pointer-events-none' : ''}`}>
               <span className="text-[10px] text-gray-400">Departure</span>
               {
                 depature ? <span className="font-semibold text-sm text-gray-700">{(formatDateToDD_MM_YYYY(depature) as string).replace(/-/g, '/')}</span> :
@@ -185,7 +187,7 @@ export function FlightSearchBar({
 
         <Popover open={false} onOpenChange={() => { }}>
           <PopoverTrigger asChild>
-            <div className={`flex flex-col px-4 py-2 bg-gray-50  min-w-[120px] ${disabled ? 'pointer-events-none' : ''}`}>
+            <div className={`flex flex-col px-3 md:px-4 py-2 bg-gray-50 ${isMobile ? 'w-full' : 'min-w-[120px]'} ${disabled ? 'pointer-events-none' : ''}`}>
               <span className="text-[10px] text-gray-400">Return</span>
               {
                 returnFlight ? (
@@ -227,9 +229,9 @@ export function FlightSearchBar({
         <FlightTreavellerPopover
           open={openTravellar}
           onOpenChange={setOpenTravellar}
-          triggerContent={<div className={`flex flex-col px-4 py-2 bg-gray-50  min-w-[170px] ${disabled ? 'pointer-events-none' : ''}`}>
+          triggerContent={<div className={`flex flex-col px-3 md:px-4 py-2 bg-gray-50 ${isMobile ? 'w-full' : 'min-w-[170px]'} ${disabled ? 'pointer-events-none' : ''}`}>
             <span className="text-[10px] text-gray-400">Travellers & Class</span>
-            <span className="font-semibold text-sm text-gray-700">{getTravellerSummary(adult ?? 0, child ?? 0, infant ?? 0, travelClass ?? "Economy")}</span>
+            <span className="font-semibold text-xs md:text-sm text-gray-700">{getTravellerSummary(adult ?? 0, child ?? 0, infant ?? 0, travelClass ?? "Economy")}</span>
           </div>}
           adult={adult ?? 0}
           child={child ?? 0}
@@ -239,7 +241,7 @@ export function FlightSearchBar({
         />
         {/* Search Button */}
         <button
-          className={`ml-2 px-6 py-2 ${buttonColor} text-white font-semibold rounded-lg shadow transition flex items-center gap-2 text-sm`}
+          className={`${isMobile ? 'w-full mt-2' : 'ml-2'} px-4 md:px-6 py-2 ${buttonColor} text-white font-semibold rounded-lg shadow transition flex items-center justify-center gap-2 text-xs md:text-sm`}
           onClick={() => {
             if (disabled) {
               onModify?.()

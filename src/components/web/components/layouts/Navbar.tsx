@@ -176,7 +176,7 @@ const Navbar = () => {
               {/* Desktop Navigation Links */}
               <Box
                 as="div"
-                className="hidden lg:flex items-center gap-6 xl:gap-8 2xl:gap-[60px] flex-1 justify-center"
+                className="hidden lg:flex items-center gap-[20px] xl:gap-[54px] 2xl:gap-[60px] flex-1 justify-center"
               >
                 {navItems?.map((item, index) => (
                   <Link

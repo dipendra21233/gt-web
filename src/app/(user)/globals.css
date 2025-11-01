@@ -407,3 +407,37 @@ svg#freepik_stories-flight-booking.animated #freepik--Character--inject-9 {
     background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
   }
 }
+
+.maison-24-medium-125 {
+  font-family: 'Maison', Arial, Helvetica, sans-serif;
+  font-weight: 500 !important;
+  color: #303030;
+  font-size: 24px !important;
+  line-height: 125%;
+}
+
+:where(.css-dev-only-do-not-override-1odpy5d).ant-drawer .ant-drawer-title{
+  font-weight: 600 !important;
+  color: white;
+  font-size: 24px !important;
+  line-height: 125%;
+}
+.flight-details-drawer.ant-drawer .ant-drawer-close{
+  display: none !important;
+}
+
+.flight-details-drawer.ant-drawer .ant-drawer-header{
+  background: #1e293b !important;
+}
+.flight-details-drawer.ant-drawer .ant-drawer-content{
+  border-radius: 20px 0px 0px 20px !important;
+}
+.filter-drawer.ant-drawer .ant-drawer-close{
+  display: none !important;
+}
+.filter-drawer.ant-drawer .ant-drawer-header{
+  background: #1e293b !important;
+}
+.filter-drawer.ant-drawer .ant-drawer-content{
+  border-radius: 0px 20px 20px 0px !important;
+}

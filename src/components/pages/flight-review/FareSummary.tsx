@@ -14,7 +14,7 @@ const FareSummaryUI = () => {
     return (
       <Box
         as="div"
-        className="w-full lg:w-1/3 p-8 flex flex-col items-center justify-center bg-gradient-to-br from-[#fff7ed] to-[#ffe0b2] rounded-2xl shadow-2xl border-4 border-dashed border-orange-300 min-h-[420px] relative overflow-hidden"
+        className="w-full p-8 flex flex-col items-center justify-center bg-gradient-to-br from-[#fff7ed] to-[#ffe0b2] rounded-2xl shadow-2xl border-4 border-dashed border-orange-300 min-h-[420px] relative overflow-hidden"
         style={{
           boxShadow: "0 8px 32px 0 rgba(255, 123, 0, 0.15), 0 1.5px 8px 0 rgba(0,0,0,0.04)",
         }}
@@ -177,7 +177,7 @@ const FareSummaryUI = () => {
   return (
     <Box
       as='div'
-      className="w-full lg:w-1/3 flex flex-col bg-white rounded-2xl overflow-hidden"
+      className="w-full flex flex-col bg-white rounded-2xl overflow-hidden"
       sx={{
         boxShadow: '0 8px 40px 0 rgba(255, 123, 0, 0.12), 0 2px 8px 0 rgba(255, 123, 0, 0.08)',
         border: '1px solid rgba(255, 123, 0, 0.15)',

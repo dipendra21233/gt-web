@@ -13,7 +13,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ThemeButton } from "@/components/web/core/Button/Button";
-import { useFlightBookingApiMutation, useGetPassengerFareSummaryNexusMutation, useGetReviewFlightDetailsMutation } from "@/hooks/useMutations";
+import { useFlightBookingApiMutation, useGetPassengerFareSummaryNexusMutation, useGetReviewFlightDetailsMutation, useNexusFlightBookingApiMutation } from "@/hooks/useMutations";
 import { usePassengerForm } from "@/hooks/usePassengerForm";
 import { flightBookingRequest } from "@/store/actions/flightBooking.action";
 import { getPassengerFareSummary } from "@/store/actions/passangerFareSummary.action";
@@ -36,6 +36,7 @@ import {
 } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { Box, Text } from "theme-ui";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 function CustomRadio({ isSelected, onSelect }: { isSelected: boolean, onSelect: () => void }) {
@@ -62,6 +63,7 @@ function AddPassangerForm() {
   const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] = useState(false);
   const [isBookingLoading, setIsBookingLoading] = useState(false);
   const dispatch = useDispatch();
+  const isMobile = useIsMobile();
   const { loading, passengerFareSummary } = useSelector((state: RootState) => state.passengerFareSummaryData);
 
   // Get passenger counts from passengerFareSummary or fallback to 0
@@ -79,11 +81,15 @@ function AddPassangerForm() {
     infantCount: infants,
   });
 
+  console.log('check82',passengerFareSummary);
+  
+
   // Watch form values for displaying in confirmation
   const formValues = watch();
 
   // Initialize the flight booking mutation
   const flightBookingMutation = useFlightBookingApiMutation();
+  const nexusFlightBookingMutation = useNexusFlightBookingApiMutation();
   const getReviewFlightDetailsMutation = useGetReviewFlightDetailsMutation();
   const getPassengerFareSummaryNexusMutation = useGetPassengerFareSummaryNexusMutation();
 
@@ -167,6 +173,108 @@ function AddPassangerForm() {
     };
   };
 
+  // Function to create Nexus booking payload
+  const createNexusBookingPayload = (
+    formData: any,
+    opts?: { bookingId?: string; flightDetails?: FlightDetails | null }
+  ): FlightBookingPayload => {
+    // Prefer details from passengerFareSummary or provided flightDetails
+    const flightInfo = opts?.flightDetails || passengerFareSummary?.flightDetails || flightDetails;
+    
+    // Get flight details from passengerFareSummary route
+    const route = passengerFareSummary?.route;
+    const segment = passengerFareSummary?.flightDetails;
+    
+    // Parse departure date for legs format (DD/MM/YYYY)
+    const formatDateForLegs = (dateTime?: string): string => {
+      if (!dateTime) return '';
+      try {
+        const date = new Date(dateTime);
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const year = date.getUTCFullYear();
+        return `${day}/${month}/${year}`;
+      } catch {
+        return '';
+      }
+    };
+
+    const bookingIdFromDetails = opts?.bookingId || passengerFareSummary?.bookingInfo?.bookingId || '';
+
+    return {
+      bookingId: bookingIdFromDetails,
+      query: {
+        nAdt: adult,
+        nInf: infants,
+        nChd: child,
+        legs: [
+          {
+            src: route?.departure?.airportCode || '',
+            dst: route?.arrival?.airportCode || '',
+            dep: formatDateForLegs(route?.departure?.dateTime)
+          }
+        ]
+      },
+      flight_keys: [bookingIdFromDetails],
+      total_price: totalFare,
+      currency: 'INR',
+      travellerInfo: [
+        ...formData.adults.map((adult: any) => ({
+          ti: adult.title,
+          fN: adult.firstName,
+          lN: adult.lastName,
+          pt: 'ADULT' as const,
+          dob: adult.dateOfBirth,
+          pNum: adult.frequentFlierNumber || adult.passportNumber || '',
+          nationality: adult.nationality || 'IN' // Default to IN if not provided
+        })),
+        ...formData.children.map((child: any) => ({
+          ti: child.title,
+          fN: child.firstName,
+          lN: child.lastName,
+          pt: 'CHILD' as const,
+          dob: child.dateOfBirth,
+          pNum: child.frequentFlierNumber || child.passportNumber || '',
+          nationality: child.nationality || 'IN'
+        })),
+        ...formData.infants.map((infant: any) => ({
+          ti: infant.title,
+          fN: infant.firstName,
+          lN: infant.lastName,
+          pt: 'INFANT' as const,
+          dob: infant.dateOfBirth,
+          pNum: infant.frequentFlierNumber || infant.passportNumber || '',
+          nationality: infant.nationality || 'IN'
+        }))
+      ],
+      gstInfo: formData.gst?.number ? {
+        gstNumber: formData.gst.number,
+        registeredName: formData.gst.company || '',
+        email: formData.gst.email || '',
+        mobile: formData.gst.phone || '',
+        address: formData.gst.address || ''
+      } : undefined,
+      deliveryInfo: {
+        emails: [formData.contactDetails.email],
+        contacts: [formData.contactDetails.mobile]
+      },
+      payment: {
+        transactionAmount: totalFare
+      },
+      paymode: '9',
+      flight: {
+        origin: route?.departure?.airportCode || '',
+        destination: route?.arrival?.airportCode || '',
+        departureDate: route?.departure?.dateTime || '',
+        arrivalDate: route?.arrival?.dateTime || '',
+        airlineCode: segment?.airline?.code || '',
+        flightNumber: segment?.flightNumber || '',
+        tripType: passengerFareSummary?.bookingInfo?.searchType === 'ROUNDTRIP' ? 'ROUND_TRIP' : 'ONE_WAY'
+      },
+      agent_reference: '' // Can be set if needed
+    };
+  };
+
   // Handle booking confirmation
   const handleBookingConfirmation = () => {
     setIsBookingLoading(true);
@@ -225,7 +333,65 @@ function AddPassangerForm() {
   const handleFormSubmit = () => {
     onSubmit((data) => {
       console.log("Form submitted successfully:", data);
-      // Always fetch fresh review details (new priceIds) before booking
+      
+      // Get supplier from passengerFareSummary
+      const supplier = passengerFareSummary?.supplier;
+      
+      // Determine supplier from localStorage if not in passengerFareSummary
+      let determinedSupplier: 'NEXUS' | 'TRIPJACK' = supplier || 'TRIPJACK';
+      if (!supplier && typeof window !== 'undefined') {
+        try {
+          const ids = priceIds ? priceIds.split(',') : [];
+          const firstId = ids[0];
+          const raw = localStorage.getItem('flightSearchResults');
+          if (raw) {
+            const results = JSON.parse(raw) as Array<{ 
+              supplier?: 'NEXUS' | 'TRIPJACK'; 
+              fares?: Array<{ priceID?: string; priceId?: string }> 
+            }>;
+            const found = results.find((r) => 
+              Array.isArray(r?.fares) && 
+              r.fares.some((f: any) => (f?.priceID || f?.priceId) === firstId)
+            );
+            if (found?.supplier) {
+              determinedSupplier = found.supplier;
+            } else {
+              const lsSupplier = localStorage.getItem('supplier');
+              if (lsSupplier === 'NEXUS' || lsSupplier === 'TRIPJACK') {
+                determinedSupplier = lsSupplier;
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error determining supplier:', e);
+        }
+      }
+
+      // For NEXUS supplier, use Nexus booking API
+      if (determinedSupplier === 'NEXUS') {
+        // Create Nexus booking payload
+        const nexusPayload = createNexusBookingPayload(data);
+        console.log("Nexus flight booking payload:", nexusPayload);
+
+        nexusFlightBookingMutation.mutate(nexusPayload, {
+          onSuccess: (response) => {
+            console.log("Nexus flight booking successful:", response);
+            // Try to get redirectUrl from common response shapes
+            const redirectUrl = response?.data?.data?.redirectUrl || response?.data?.redirectUrl || (response as any)?.redirectUrl;
+            if (redirectUrl) {
+              window.location.assign(redirectUrl);
+              return;
+            }
+            setIsConfirmationDialogOpen(true);
+          },
+          onError: (error) => {
+            console.error("Nexus flight booking failed:", error);
+          }
+        });
+        return;
+      }
+
+      // For TRIPJACK supplier, use existing flow with review API
       const ids = priceIds ? priceIds.split(',') : []
       getReviewFlightDetailsMutation.mutate(ids, {
         onSuccess: (res: any) => {
@@ -268,23 +434,23 @@ function AddPassangerForm() {
     // Determine supplier by matching priceId in localStorage flightSearchResults
     const ids = priceIds.split(',');
     const firstId = ids[0];
-    let supplier: 'NEXUS' | 'TRIPJAC' | undefined;
+    let supplier: 'NEXUS' | 'TRIPJACK' | undefined;
     try {
       const raw = typeof window !== 'undefined' ? localStorage.getItem('flightSearchResults') : null;
       if (raw) {
-        const results = JSON.parse(raw) as Array<{ supplier?: 'NEXUS' | 'TRIPJAC'; fares?: Array<{ priceID?: string; priceId?: string }> }>;
+        const results = JSON.parse(raw) as Array<{ supplier?: 'NEXUS' | 'TRIPJACK'; fares?: Array<{ priceID?: string; priceId?: string }> }>;
         const found = results.find((r) => Array.isArray(r?.fares) && r.fares.some((f: any) => (f?.priceID || f?.priceId) === firstId));
         supplier = (found as any)?.supplier;
       }
       if (!supplier && typeof window !== 'undefined') {
         const lsSupplier = localStorage.getItem('supplier');
-        if (lsSupplier === 'NEXUS' || lsSupplier === 'TRIPJAC') supplier = lsSupplier;
+        if (lsSupplier === 'NEXUS' || lsSupplier === 'TRIPJACK') supplier = lsSupplier;
       }
     } catch (e) {
       // fallback to default flow
     }
 
-    const fetchKey = `${supplier || 'TRIPJAC'}|${ids.join(',')}`;
+    const fetchKey = `${supplier || 'TRIPJACK'}|${ids.join(',')}`;
     if (fetchedKeyRef.current === fetchKey) return;
 
     if (supplier === 'NEXUS') {
@@ -335,6 +501,10 @@ function AddPassangerForm() {
         onSuccess: (res: any) => {
           // Transform Nexus response to expected format, enriching with localStorage data
           const transformed = transformNexusFareSummaryResponse(res, ids);
+          // Ensure supplier is set (should already be 'NEXUS' from transformNexusFareSummaryResponse)
+          if (!transformed.supplier) {
+            transformed.supplier = 'NEXUS';
+          }
           dispatch(setPassengerFareSummary(transformed));
           fetchedKeyRef.current = fetchKey;
         },
@@ -346,22 +516,25 @@ function AddPassangerForm() {
         }
       });
     } else {
-      dispatch(getPassengerFareSummary([priceIds], () => {}));
+      // Pass the split array of priceIds, not the comma-separated string
+      dispatch(getPassengerFareSummary(ids, () => {}));
       fetchedKeyRef.current = fetchKey;
     }
   }, [dispatch, priceIds]);
 
   return (
     <div className="min-h-screen services-section !m-auto">
-      <div className="container mx-auto pt-[50px]">
+      <div className="container mx-auto pt-4 md:pt-[50px] px-1 md:px-6">
         {passengerFareSummary && <FareSummaryFlightDetails passengerFareSummary={passengerFareSummary} />}
 
-        <Box as="div" className="flex h-full gap-[28px] mt-8 mb-8">
+        <Box as="div" className="flex flex-col lg:flex-row h-full gap-4 md:gap-[28px] mt-4 md:mt-8 mb-4 md:mb-8">
           {
             loading.includes("passengerFareSummary/getPassengerFareSummary") ? (
               <FareSummarySidebarSkeletonLoader />
             ) : (
-              <FareSummaryUI />
+              <Box as="div" className="w-full lg:w-[380px] flex-shrink-0">
+                <FareSummaryUI />
+              </Box>
             )
           }
 
@@ -369,11 +542,11 @@ function AddPassangerForm() {
             loading.includes("passengerFareSummary/getPassengerFareSummary") ? (
               <FareSummaryAccordianSkeletonLoader />
             ) : passengerFareSummary ? (
-              <Box as="div" className="w-full flex flex-col">
+              <Box as="div" className="w-full lg:flex-1 flex flex-col">
                 <Accordion
                   type="single"
                   collapsible={false}
-                  className="w-full space-y-6"
+                  className={`w-full ${isMobile ? 'space-y-3' : 'space-y-6'}`}
                   defaultValue="item-1"
                 >
                   <AccordionItem
@@ -381,12 +554,12 @@ function AddPassangerForm() {
                     className="border border-gray-200 rounded-xl shadow-lg bg-white overflow-hidden transition-all duration-300 hover:shadow-xl"
                   >
                     <AccordionTrigger className="p-0 transition-all duration-300 font-semibold text-white bg-gradient-to-r from-[#ff7b00] to-[#ff9500] [&>svg]:hidden hover:no-underline hover:from-[#ff9500] hover:to-[#ff7b00]">
-                      <Box as="div" className="flex items-center gap-2 p-3 w-full min-h-0">
+                      <Box as="div" className={`flex items-center gap-2 ${isMobile ? 'p-2.5' : 'p-3'} w-full min-h-0`}>
                         <Box
                           as="div"
                           sx={{
-                            width: "40px",
-                            height: "40px",
+                            width: isMobile ? "32px" : "40px",
+                            height: isMobile ? "32px" : "40px",
                             borderRadius: "50%",
                             background: "rgba(255, 255, 255, 0.2)",
                             display: "flex",
@@ -398,8 +571,8 @@ function AddPassangerForm() {
                           <Image
                             src="/svg/passenger-icon.svg"
                             alt="Passenger Icon"
-                            width={20}
-                            height={20}
+                            width={isMobile ? 16 : 20}
+                            height={isMobile ? 16 : 20}
                             className="filter brightness-0 invert"
                           />
                         </Box>
@@ -409,7 +582,7 @@ function AddPassangerForm() {
                             color="white"
                             as="span"
                             sx={{
-                              fontSize: "1.25rem",
+                              fontSize: isMobile ? "1rem" : "1.25rem",
                               fontWeight: 700,
                               color: "#ffffff",
                               letterSpacing: "0.025em",
@@ -422,7 +595,7 @@ function AddPassangerForm() {
                         </Box>
                       </Box>
                     </AccordionTrigger>
-                    <AccordionContent className="p-4 bg-gradient-to-br from-gray-50 to-white">
+                    <AccordionContent className={`${isMobile ? 'p-3' : 'p-4'} bg-gradient-to-br from-gray-50 to-white`}>
                       <Passangerform
                         control={control}
                         errors={errors}
@@ -438,12 +611,12 @@ function AddPassangerForm() {
                     className="border border-gray-200 rounded-xl shadow-lg bg-white overflow-hidden transition-all duration-300 hover:shadow-xl"
                   >
                     <AccordionTrigger className="p-0 transition-all duration-300 font-semibold text-white bg-gradient-to-r from-[#ff7b00] to-[#ff9500] [&>svg]:hidden hover:no-underline hover:from-[#ff9500] hover:to-[#ff7b00]">
-                      <Box as="div" className="flex items-center gap-2 p-3 w-full min-h-0">
+                      <Box as="div" className={`flex items-center gap-2 ${isMobile ? 'p-2.5' : 'p-3'} w-full min-h-0`}>
                         <Box
                           as="div"
                           sx={{
-                            width: "40px",
-                            height: "40px",
+                            width: isMobile ? "32px" : "40px",
+                            height: isMobile ? "32px" : "40px",
                             borderRadius: "50%",
                             background: "rgba(255, 255, 255, 0.2)",
                             display: "flex",
@@ -455,8 +628,8 @@ function AddPassangerForm() {
                           <Image
                             src="/svg/gst-icon.svg"
                             alt="GST Icon"
-                            width={20}
-                            height={20}
+                            width={isMobile ? 16 : 20}
+                            height={isMobile ? 16 : 20}
                             className="filter brightness-0 invert"
                           />
                         </Box>
@@ -466,7 +639,7 @@ function AddPassangerForm() {
                             color="white"
                             as="span"
                             sx={{
-                              fontSize: "1.25rem",
+                              fontSize: isMobile ? "1rem" : "1.25rem",
                               fontWeight: 700,
                               color: "#ffffff",
                               letterSpacing: "0.025em",
@@ -487,7 +660,7 @@ function AddPassangerForm() {
                       <Box as="div" sx={{ padding: "1rem" }}>
                         <Box as="div" className="space-y-6">
                           <Box as="div" className="space-y-4">
-                            <Box as="div" className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Box as="div" className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-1 md:grid-cols-2 gap-4'}`}>
                               <Controller
                                 name="gst.number"
                                 control={control}
@@ -604,12 +777,12 @@ function AddPassangerForm() {
                     className="border border-gray-200 rounded-xl shadow-lg bg-white overflow-hidden transition-all duration-300 hover:shadow-xl"
                   >
                     <AccordionTrigger className="p-0 transition-all duration-300 font-semibold text-white bg-gradient-to-r from-[#ff7b00] to-[#ff9500] [&>svg]:text-white hover:no-underline hover:from-[#ff9500] hover:to-[#ff7b00] [&>svg]:w-7 [&>svg]:h-7">
-                      <Box as="div" className="flex items-center gap-2 p-3 w-full min-h-0">
+                      <Box as="div" className={`flex items-center gap-2 ${isMobile ? 'p-2.5' : 'p-3'} w-full min-h-0`}>
                         <Box
                           as="div"
                           sx={{
-                            width: "40px",
-                            height: "40px",
+                            width: isMobile ? "32px" : "40px",
+                            height: isMobile ? "32px" : "40px",
                             borderRadius: "50%",
                             background: "rgba(255, 255, 255, 0.2)",
                             display: "flex",
@@ -621,8 +794,8 @@ function AddPassangerForm() {
                           <Image
                             src="/svg/payment-icon.svg"
                             alt="Payment Icon"
-                            width={20}
-                            height={20}
+                            width={isMobile ? 16 : 20}
+                            height={isMobile ? 16 : 20}
                             className="filter brightness-0 invert"
                           />
                         </Box>
@@ -632,7 +805,7 @@ function AddPassangerForm() {
                             color="white"
                             as="span"
                             sx={{
-                              fontSize: "1.25rem",
+                              fontSize: isMobile ? "1rem" : "1.25rem",
                               fontWeight: 700,
                               color: "#ffffff",
                               letterSpacing: "0.025em",
@@ -653,7 +826,7 @@ function AddPassangerForm() {
                       <Box as="div" sx={{ padding: "1rem" }}>
                         <Box as="div" className="space-y-8">
                           <Box as="div" className="space-y-3">
-                            <Box as="div" className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Box as="div" className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-1 md:grid-cols-2 gap-4'}`}>
                               <Controller
                                 name="contactDetails.email"
                                 control={control}
@@ -711,7 +884,7 @@ function AddPassangerForm() {
                             name="payment.method"
                             control={control}
                             render={({ field }) => (
-                              <Box as="div" className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <Box as="div" className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-1 md:grid-cols-2 gap-3'}`}>
                                 {[
                                   {
                                     value: 'Deposit',
@@ -826,12 +999,12 @@ function AddPassangerForm() {
 
 
         </Box>
-        <Box as="div" className="flex justify-end mt-8">
+        <Box as="div" className="flex justify-end mt-4 md:mt-8 px-4 md:px-0">
           <ThemeButton
             onClick={handleFormSubmit}
             variant="primary"
             disabled={flightBookingMutation.isPending}
-            className="bg-gradient-to-r from-[#ff7b00] to-[#ff9500] text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:from-[#ff9500] hover:to-[#ff7b00] transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            className="w-full md:w-auto bg-gradient-to-r from-[#ff7b00] to-[#ff9500] text-white px-6 md:px-8 py-3 md:py-4 text-base md:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:from-[#ff9500] hover:to-[#ff7b00] transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
             {flightBookingMutation.isPending ? 'Booking...' : 'Book Now'}
           </ThemeButton>

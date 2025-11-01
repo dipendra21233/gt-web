@@ -15,7 +15,58 @@ function* getPassengerFareSummaryWorker(action: ReturnType<typeof getPassengerFa
     if (response.status === 200) {
       console.log("API call successful, status 200. Calling callback and dispatching setPassengerFareSummary.");
       action.meta?.callBack?.(response.status === 200)
-      yield put(setPassengerFareSummary(response.data))
+      
+      // Add supplier by matching priceId in localStorage flightSearchResults
+      let fareSummaryData = { ...response.data };
+      if (!fareSummaryData.supplier) {
+        try {
+          const priceIds = action?.payload?.priceId || [];
+          const firstPriceId = priceIds[0];
+          
+          if (firstPriceId && typeof window !== 'undefined') {
+            // First, try to match priceId in flightSearchResults
+            const raw = localStorage.getItem('flightSearchResults');
+            if (raw) {
+              const results = JSON.parse(raw) as Array<{ 
+                supplier?: 'NEXUS' | 'TRIPJACK'; 
+                fares?: Array<{ priceID?: string; priceId?: string }> 
+              }>;
+              
+              const found = results.find((r) => 
+                Array.isArray(r?.fares) && 
+                r.fares.some((f: any) => (f?.priceID || f?.priceId) === firstPriceId)
+              );
+              
+              if (found?.supplier) {
+                fareSummaryData.supplier = found.supplier;
+              } else {
+                // Fallback: check the 'supplier' key in localStorage
+                const supplier = localStorage.getItem('supplier');
+                if (supplier === 'NEXUS' || supplier === 'TRIPJACK') {
+                  fareSummaryData.supplier = supplier;
+                } else {
+                  fareSummaryData.supplier = 'TRIPJACK'; // Default fallback
+                }
+              }
+            } else {
+              // No flightSearchResults, try localStorage supplier key
+              const supplier = localStorage.getItem('supplier');
+              if (supplier === 'NEXUS' || supplier === 'TRIPJACK') {
+                fareSummaryData.supplier = supplier;
+              } else {
+                fareSummaryData.supplier = 'TRIPJACK'; // Default fallback
+              }
+            }
+          } else {
+            fareSummaryData.supplier = 'TRIPJACK'; // Default fallback
+          }
+        } catch (e) {
+          console.error('Error determining supplier:', e);
+          fareSummaryData.supplier = 'TRIPJACK'; // Default fallback
+        }
+      }
+      
+      yield put(setPassengerFareSummary(fareSummaryData))
     } 
   } catch (error) {
     console.log("Error in getPassengerFareSummaryWorker:", error);

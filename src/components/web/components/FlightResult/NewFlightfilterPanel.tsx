@@ -13,6 +13,8 @@ import { FaMoon, FaSun } from 'react-icons/fa';
 import { MdBrightness5, MdWbTwilight } from 'react-icons/md';
 import { useDispatch, useSelector } from 'react-redux';
 import { Box, Text } from 'theme-ui';
+import { isMobile } from 'react-device-detect';
+import { FC } from 'react';
 
 // Enhanced color scheme matching the Gayatri Travels theme
 const COLORS = {
@@ -57,7 +59,8 @@ const departureSlots = [
   },
 ];
 
-export default function FlightFiltersPanelNew() {
+// Filter Content Component - Reusable for both desktop and mobile
+export const FilterContent: FC = () => {
   const { airlines, activeFilters } = useSelector(
     (state: MainStoreType) => state.filterFlightData
   )
@@ -89,40 +92,22 @@ export default function FlightFiltersPanelNew() {
   };
 
   return (
-    <Box
-      className="
-        flight-panel
-        w-full
-        hidden lg:block
-        min-w-[320px] max-w-[380px]
-        p-6
-        rounded-2xl
-        shadow-lg
-        border
-        border-orange-100
-        sticky
-        top-6
-        h-fit
-      "
-      sx={{
-        background: 'white',
-        borderColor: COLORS.border,
-        boxShadow: '0 8px 32px 0 rgba(251, 146, 60, 0.12)',
-      }}
-    >
+    <>
       {/* Header */}
       <Box className="flex justify-between items-center mb-6">
-        <Text
-          variant="Maison18Medium20"
-          sx={{
-            fontWeight: 700,
-            fontSize: 22,
-            letterSpacing: 0.2,
-            color: COLORS.primaryText,
-          }}
-        >
-          Filters
-        </Text>
+         {!isMobile && (
+          <Text 
+            variant="Maison18Medium20"
+            sx={{
+              fontWeight: 700,
+              fontSize: 22,
+              letterSpacing: 0.2,
+              color: COLORS.primaryText,
+            }}
+          >
+            Filters
+          </Text>
+         )}
         <Text
           variant="Maison14Regular20"
           sx={{
@@ -427,6 +412,35 @@ export default function FlightFiltersPanelNew() {
           </Box>
         ))}
       </Box>
+    </>
+  );
+};
+
+// Desktop Filter Panel
+export default function FlightFiltersPanelNew() {
+  return (
+    <Box
+      className="
+        flight-panel
+        w-full
+        hidden lg:block
+        min-w-[320px] max-w-[380px]
+        p-6
+        rounded-2xl
+        shadow-lg
+        border
+        border-orange-100
+        sticky
+        top-6
+        h-fit
+      "
+      sx={{
+        background: 'white',
+        borderColor: COLORS.border,
+        boxShadow: '0 8px 32px 0 rgba(251, 146, 60, 0.12)',
+      }}
+    >
+      <FilterContent />
     </Box>
   );
 }

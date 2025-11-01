@@ -2,10 +2,11 @@
 import { FlightBookingBar } from "@/components/pages/flight-result/FlightBookingBar"
 import FlightSearchForm from "@/components/shared/FlightSearchForm/FlightSearchForm"
 import CommonModal from "@/components/shared/PopupModals/CommonModal"
+import CommonDrawerModal from "@/components/shared/PopupModals/CommonDrawerModal"
 import FlightCardSkeleton from "@/components/shared/Skeleton/FlightCardSkeleton"
 import { FlightDetailDrawer } from "@/components/pages/flight-result/FlightDetailsDrawer"
 import { FlightSearchBar } from "@/components/web/components/FlightResult/FlightSearchBar"
-import FlightFiltersPanelNew from "@/components/web/components/FlightResult/NewFlightfilterPanel"
+import FlightFiltersPanelNew, { FilterContent } from "@/components/web/components/FlightResult/NewFlightfilterPanel"
 // removed API trigger on Show Details
 import { clearAllFilters, setUserInfo } from "@/store/slice/flight.slice"
 import { Fare, FlightListingDataProps } from "@/types/module/flightSearch"
@@ -16,6 +17,8 @@ import { useSearchParams } from 'next/navigation'
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Box, Text } from "theme-ui"
+import { Filter } from "lucide-react"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 // Memoized Flight Card Component for better performance
 const FlightCard = React.memo(({ flight, index, returnFlight, selectedFare, onShowDetails }: {
@@ -24,27 +27,30 @@ const FlightCard = React.memo(({ flight, index, returnFlight, selectedFare, onSh
   returnFlight: boolean;
   selectedFare: Fare;
   onShowDetails: (data: Fare) => void;
-}) => (
-  <Box
-    className="bg-gradient-to-br from-white via-orange-50/30 to-amber-50/50 rounded-2xl shadow-lg border border-orange-200/60 hover:shadow-xl hover:border-orange-300 hover:-translate-y-1 transition-all duration-300 p-2 group"
-    sx={{
-      background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,247,237,0.8) 50%, rgba(254,243,199,0.6) 100%)',
-      boxShadow: '0 8px 32px 0 rgba(251, 146, 60, 0.08)',
-      '&:hover': {
-        boxShadow: '0 16px 48px 0 rgba(251, 146, 60, 0.15)',
-        transform: 'translateY(-4px)',
-      }
-    }}
-  >
-    <FlightBookingBar
-      flightData={flight}
-      varient={returnFlight ? "dual" : "single"}
-      showDetails={onShowDetails}
-      selectedFare={selectedFare}
-      index={index}
-    />
-  </Box>
-));
+}) => {
+  const isMobile = useIsMobile();
+  return (
+    <Box
+      className={`bg-gradient-to-br from-white via-orange-50/30 to-amber-50/50 ${isMobile ? 'rounded-xl' : 'rounded-2xl'} shadow-lg border border-orange-200/60 hover:shadow-xl hover:border-orange-300 ${isMobile ? 'hover:-translate-y-0.5' : 'hover:-translate-y-1'} transition-all duration-300 ${isMobile ? 'p-1' : 'p-2'} group`}
+      sx={{
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,247,237,0.8) 50%, rgba(254,243,199,0.6) 100%)',
+        boxShadow: '0 8px 32px 0 rgba(251, 146, 60, 0.08)',
+        '&:hover': {
+          boxShadow: isMobile ? '0 12px 36px 0 rgba(251, 146, 60, 0.12)' : '0 16px 48px 0 rgba(251, 146, 60, 0.15)',
+          transform: isMobile ? 'translateY(-2px)' : 'translateY(-4px)',
+        }
+      }}
+    >
+      <FlightBookingBar
+        flightData={flight}
+        varient={returnFlight ? "dual" : "single"}
+        showDetails={onShowDetails}
+        selectedFare={selectedFare}
+        index={index}
+      />
+    </Box>
+  );
+});
 
 FlightCard.displayName = 'FlightCard';
 
@@ -63,74 +69,93 @@ const CustomFlightSortBar = React.memo(({
   flightCount: number
   fromDestination: string | null
   toDestination: string | null
-}) => (
-  <Box className="w-full flex flex-col gap-1 rounded-t-lg px-2 py-1">
-    {/* Top Row: Route and Flights Count */}
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, px: 1 }}>
-      <Text variant="Primary18Medium125" color="orange_700">
-        {fromDestination} - {toDestination}
-      </Text>
-      <Text variant="Maison14Regular20" color="grey1">
-        {flightCount} Flights Available
-      </Text>
-    </Box>
-    {/* Sort Tabs */}
-    <Box className="flex items-center justify-between rounded-lg overflow-hidden bg-gray-50">
+}) => {
+  const isMobile = useIsMobile()
+  
+  return (
+    <Box className="w-full flex flex-col gap-1 rounded-t-lg px-2 py-1">
+      {/* Top Row: Route and Flights Count */}
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        mb: 1, 
+        px: 1,
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? 1 : 0,
+        flexWrap:'wrap'
+      }}>
+        <Text variant="Primary18Medium125" color="orange_700" sx={{ fontSize: isMobile ? '16px' : '18px' }}>
+          {fromDestination} - {toDestination}
+        </Text>
+        <Text variant="Maison14Regular20" color="grey1" sx={{ fontSize: isMobile ? '12px' : '14px' }}>
+          {flightCount} Flights Available
+        </Text>
+      </Box>
+      {/* Sort Tabs */}
+      <Box className={`flex items-center justify-between rounded-lg overflow-hidden bg-gray-50 ${isMobile ? 'overflow-x-auto' : ''}`} sx={{
+        '&::-webkit-scrollbar': {
+          display: 'none',
+        },
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+      }}>
       <Box
         as="button"
-        className={`flex-1 py-2 font-semibold transition-colors text-sm ${currentSort === "price" ? "bg-orange-100 text-orange_600" : "text-primary_text_dark hover:bg-grey_bg"
+        className={`${isMobile ? 'flex-shrink-0 px-4' : 'flex-1'} py-2 font-semibold transition-colors text-sm ${currentSort === "price" ? "bg-orange-100 text-orange_600" : "text-primary_text_dark hover:bg-grey_bg"
           }`}
         onClick={() => onSortChange('price')}
       >
         <Text
           variant="Maison14Regular20"
-          sx={{ color: currentSort === "price" ? "#F97316" : "#1A1A1A" }}
+          sx={{ color: currentSort === "price" ? "#F97316" : "#1A1A1A", fontSize: isMobile ? '12px' : '14px' }}
         >
           Price {currentSort === "price" && (sortOrder === 'asc' ? '↑' : '↓')}
         </Text>
       </Box>
       <Box
         as="button"
-        className={`flex-1 py-2 font-semibold transition-colors text-sm ${currentSort === "duration" ? "bg-orange-100 text-orange_600" : "text-primary_text_dark hover:bg-grey_bg"
+        className={`${isMobile ? 'flex-shrink-0 px-4' : 'flex-1'} py-2 font-semibold transition-colors text-sm ${currentSort === "duration" ? "bg-orange-100 text-orange_600" : "text-primary_text_dark hover:bg-grey_bg"
           }`}
         onClick={() => onSortChange('duration')}
       >
         <Text
           variant="Maison14Regular20"
-          sx={{ color: currentSort === "duration" ? "#F97316" : "#1A1A1A" }}
+          sx={{ color: currentSort === "duration" ? "#F97316" : "#1A1A1A", fontSize: isMobile ? '12px' : '14px' }}
         >
           Duration {currentSort === "duration" && (sortOrder === 'asc' ? '↑' : '↓')}
         </Text>
       </Box>
       <Box
         as="button"
-        className={`flex-1 py-2 font-semibold transition-colors text-sm ${currentSort === "departure" ? "bg-orange-100 text-orange_600" : "text-primary_text_dark hover:bg-grey_bg"
+        className={`${isMobile ? 'flex-shrink-0 px-4' : 'flex-1'} py-2 font-semibold transition-colors text-sm ${currentSort === "departure" ? "bg-orange-100 text-orange_600" : "text-primary_text_dark hover:bg-grey_bg"
           }`}
         onClick={() => onSortChange('departure')}
       >
         <Text
           variant="Maison14Regular20"
-          sx={{ color: currentSort === "departure" ? "#F97316" : "#1A1A1A" }}
+          sx={{ color: currentSort === "departure" ? "#F97316" : "#1A1A1A", fontSize: isMobile ? '12px' : '14px' }}
         >
           Departure {currentSort === "departure" && (sortOrder === 'asc' ? '↑' : '↓')}
         </Text>
       </Box>
       <Box
         as="button"
-        className={`flex-1 py-2 font-semibold transition-colors text-sm ${currentSort === "arrival" ? "bg-orange-100 text-orange_600" : "text-primary_text_dark hover:bg-grey_bg"
+        className={`${isMobile ? 'flex-shrink-0 px-4' : 'flex-1'} py-2 font-semibold transition-colors text-sm ${currentSort === "arrival" ? "bg-orange-100 text-orange_600" : "text-primary_text_dark hover:bg-grey_bg"
           }`}
         onClick={() => onSortChange('arrival')}
       >
         <Text
           variant="Maison14Regular20"
-          sx={{ color: currentSort === "arrival" ? "#F97316" : "#1A1A1A" }}
+          sx={{ color: currentSort === "arrival" ? "#F97316" : "#1A1A1A", fontSize: isMobile ? '12px' : '14px' }}
         >
           Arrival {currentSort === "arrival" && (sortOrder === 'asc' ? '↑' : '↓')}
         </Text>
       </Box>
     </Box>
   </Box>
-))
+  )
+})
 
 CustomFlightSortBar.displayName = 'CustomFlightSortBar'
 
@@ -155,10 +180,12 @@ function FlightResult() {
 
   const [openDrawerModal, setOpenDrawerModal] = useState(false)
   const [isModifyOpen, setIsModifyOpen] = useState(false)
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false)
   const [isSearching] = useState(false)
   const [localStorageFlightData, setLocalStorageFlightData] = useState<FlightListingDataProps[]>([])
   const [sortBy, setSortBy] = useState<'price' | 'duration' | 'departure' | 'arrival'>('price')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const isMobile = useIsMobile()
 
   // Pagination and virtualization states
   const [currentPage, setCurrentPage] = useState(1)
@@ -411,17 +438,28 @@ function FlightResult() {
 
   return (
     <div className="min-h-screen services-section !m-auto">
-      <div className="container mx-auto pt-[50px]">
-        <Box as="div" className="mx-auto grid grid-cols-1 lg:grid-cols-12 gap-[30px] w-full">
-          {/* Sidebar Filters */}
-          <Box className="lg:col-span-4 xl:col-span-3">
+      <div className="container mx-auto pt-4 md:pt-[50px]">
+        <Box as="div" className="mx-auto grid grid-cols-1 lg:grid-cols-12 gap-[20px] md:gap-[30px] w-full">
+          {/* Filter Button - Visible on all screens except large desktop (where sidebar is shown) */}
+          <Box as="div" className="block lg:hidden w-full col-span-full">
+            <button
+              onClick={() => setIsFilterDrawerOpen(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <Filter className="w-5 h-5" />
+              <Text variant="Maison16Demi20" className="text-white">Filters</Text>
+            </button>
+          </Box>
+
+          {/* Sidebar Filters - Desktop Only (lg and above) */}
+          <Box className="hidden lg:block lg:col-span-4 xl:col-span-3">
             <FlightFiltersPanelNew />
           </Box>
 
           {/* Main Content Area */}
-          <Box className="lg:col-span-8 xl:col-span-9 space-y-6">
+          <Box className="lg:col-span-8 xl:col-span-9 space-y-4 md:space-y-6">
             {/* Use the same search bar UI but disabled; Search acts as Modify Search */}
-            <Box className="bg-white rounded-xl shadow-sm border border-orange-100 p-4 w-full">
+            <Box className="bg-white rounded-xl shadow-sm border border-orange-100 p-3 md:p-4 w-full">
               <FlightSearchBar
                 fromDestination={fromDestination}
                 toDestination={toDestination}
@@ -444,8 +482,14 @@ function FlightResult() {
               />
             </Box>
             {/* Sort Bar */}
-            <Box as="div" className='flex gap-4 w-full'>
-              <Box className="bg-white rounded-xl shadow-sm border border-orange-100 p-4 w-full">
+            <Box as="div" className={`flex gap-2 md:gap-4 w-full ${isMobile ? 'overflow-x-auto' : ''}`} sx={{
+              '&::-webkit-scrollbar': {
+                display: 'none',
+              },
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            }}>
+              <Box className="bg-white rounded-xl shadow-sm border border-orange-100 p-3 md:p-4 w-full flex-shrink-0">
                 <CustomFlightSortBar
                   onSortChange={handleSortChange}
                   currentSort={sortBy}
@@ -457,7 +501,7 @@ function FlightResult() {
               </Box>
               {
                 returnFlight && (
-                  <Box className="bg-white rounded-xl shadow-sm border border-orange-100 p-4 w-full">
+                  <Box className="bg-white rounded-xl shadow-sm border border-orange-100 p-3 md:p-4 w-full flex-shrink-0">
                     <CustomFlightSortBar
                       onSortChange={handleSortChange}
                       currentSort={sortBy}
@@ -472,11 +516,11 @@ function FlightResult() {
             </Box>
 
             {/* Flight Results */}
-            <Box as="div" className='flex gap-6 w-full justify-center'>
+            <Box as="div" className={`flex gap-4 md:gap-6 w-full justify-center ${isMobile ? 'flex-col' : ''}`}>
               <Box
                 ref={scrollContainerRef}
                 as="div"
-                className="flex flex-col gap-[20px] w-full overflow-y-scroll max-h-[75vh] bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-orange-200/60 p-8"
+                className={`flex flex-col gap-4 md:gap-[20px] w-full overflow-y-auto ${isMobile ? 'max-h-none' : 'max-h-[75vh]'} bg-white/90 backdrop-blur-sm rounded-xl md:rounded-2xl shadow-xl border border-orange-200/60 p-1 md:p-8`}
                 onScroll={handleScroll}
                 sx={{
                   background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,247,237,0.9) 100%)',
@@ -496,8 +540,8 @@ function FlightResult() {
                       background: 'linear-gradient(180deg, #f97316 0%, #ea580c 100%)',
                     }
                   },
-                  'scrollbar-width': 'auto',
-                  'scrollbar-gutter': 'stable',
+                  scrollbarWidth: 'auto',
+                  scrollbarGutter: 'stable',
                 }}>
                 {/* Loading Skeleton */}
                 {isSearching && (
@@ -631,7 +675,7 @@ function FlightResult() {
                 returnFlight && (
                   <Box
                     as="div"
-                    className='flex gap-6 w-full justify-center overflow-y-scroll max-h-[75vh] bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-orange-200/60 p-8'
+                    className={`flex gap-4 md:gap-6 w-full justify-center overflow-y-auto ${isMobile ? 'max-h-none' : 'max-h-[75vh]'} bg-white/90 backdrop-blur-sm rounded-xl md:rounded-2xl shadow-xl border border-orange-200/60 p-4 md:p-8`}
                     sx={{
                       background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,247,237,0.9) 100%)',
                       boxShadow: '0 12px 48px 0 rgba(251, 146, 60, 0.15)',
@@ -650,8 +694,8 @@ function FlightResult() {
                           background: 'linear-gradient(180deg, #f97316 0%, #ea580c 100%)',
                         }
                       },
-                      'scrollbar-width': 'auto',
-                      'scrollbar-gutter': 'stable',
+                      scrollbarWidth: 'auto',
+                      scrollbarGutter: 'stable',
                     }}
                   >
                     {
@@ -682,6 +726,20 @@ function FlightResult() {
               }
             </Box>
           </Box>
+
+          {/* Mobile Filter Drawer */}
+          <CommonDrawerModal
+            className="filter-drawer"
+            open={isFilterDrawerOpen}
+            onClose={() => setIsFilterDrawerOpen(false)}
+            placement="left"
+            title="Filters"
+            width={340}
+          >
+            <Box sx={{ p: 3 }}>
+              <FilterContent />
+            </Box>
+          </CommonDrawerModal>
 
           {/* Flight Detail Drawer */}
           {

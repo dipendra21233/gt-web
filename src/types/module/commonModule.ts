@@ -146,8 +146,10 @@ export interface CommonDrawerModalProps {
   children: ReactNode
   title?: string
   width?: number | string
-  height?: number
+  height?: number 
+  footer?: ReactNode
   placement?: Placement
+  className?: string
   // styles?: DrawerStyles
 }
 
