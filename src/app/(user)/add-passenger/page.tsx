@@ -37,6 +37,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { Box, Text } from "theme-ui";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { generateAgentReference } from "@/utils/functions";
 
 
 function CustomRadio({ isSelected, onSelect }: { isSelected: boolean, onSelect: () => void }) {
@@ -92,21 +93,16 @@ function AddPassangerForm() {
   const nexusFlightBookingMutation = useNexusFlightBookingApiMutation();
   const getReviewFlightDetailsMutation = useGetReviewFlightDetailsMutation();
   const getPassengerFareSummaryNexusMutation = useGetPassengerFareSummaryNexusMutation();
-
-  // Function to map form data to FlightBookingPayload
   const createFlightBookingPayload = (
     formData: any,
     opts?: { bookingId?: string; flightDetails?: FlightDetails | null }
   ): FlightBookingPayload => {
-    // Prefer details from provided review API response, fallback to passengerFareSummary or local state
     const flightInfo = opts?.flightDetails || passengerFareSummary?.flightDetails || flightDetails;
 
-    // Type guard to check if it's a proper FlightDetails object
     const isFlightDetails = (obj: any): obj is FlightDetails => {
       return obj && typeof obj === 'object' && 'tripInfos' in obj && 'bookingId' in obj;
     };
 
-    // Extract flight information from the complex FlightDetails structure
     const firstTrip = isFlightDetails(flightInfo) ? flightInfo?.tripInfos?.[0] : null;
     const firstSegment = firstTrip?.sI?.[0];
     const airlineInfo = firstSegment?.fD?.aI;
@@ -125,7 +121,7 @@ function AddPassangerForm() {
           pt: 'ADULT' as const,
           dob: adult.dateOfBirth,
           pNum: adult.frequentFlierNumber || '',
-          eD: '2030-12-31' // Default expiry date, can be made configurable
+          eD: '2030-12-31'
         })),
         ...formData.children.map((child: any) => ({
           ti: child.title,
@@ -168,20 +164,16 @@ function AddPassangerForm() {
         arrivalDate: firstSegment?.at || '',
         airlineCode: airlineInfo?.code || '',
         flightNumber: firstSegment?.fD?.fN || '',
-        tripType: 'ONE_WAY' as const // Can be made dynamic based on search type
+        tripType: (passengerFareSummary?.bookingInfo?.searchType === 'ROUNDTRIP' ? 'ROUND_TRIP' : 'ONE_WAY') 
       }
     };
   };
-
-  // Function to create Nexus booking payload
   const createNexusBookingPayload = (
     formData: any,
     opts?: { bookingId?: string; flightDetails?: FlightDetails | null }
   ): FlightBookingPayload => {
-    // Prefer details from passengerFareSummary or provided flightDetails
     const flightInfo = opts?.flightDetails || passengerFareSummary?.flightDetails || flightDetails;
     
-    // Get flight details from passengerFareSummary route
     const route = passengerFareSummary?.route;
     const segment = passengerFareSummary?.flightDetails;
     
@@ -271,7 +263,7 @@ function AddPassangerForm() {
         flightNumber: segment?.flightNumber || '',
         tripType: passengerFareSummary?.bookingInfo?.searchType === 'ROUNDTRIP' ? 'ROUND_TRIP' : 'ONE_WAY'
       },
-      agent_reference: '' // Can be set if needed
+      agent_reference: generateAgentReference()
     };
   };
 

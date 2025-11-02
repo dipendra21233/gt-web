@@ -570,3 +570,13 @@ export function shortFilterData(
 
   return sortedData
 }
+
+
+export function generateAgentReference(): string {
+
+  const min = 2000000;
+  const max = 2999999;
+  const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+  
+  return `GT${randomNumber}`;
+}

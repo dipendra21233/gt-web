@@ -280,13 +280,20 @@ export const transformNexusFareSummaryResponse = (
     const baseFare = fare?.baseFare || Math.round(totalPrice * 0.85)
     const taxes = fare?.taxes || Math.round(totalPrice * 0.15)
 
+    const legsCount = data?.nexusBookingData?.query?.legs?.length || 0
+    const searchType = legsCount > 1 
+      ? 'ROUNDTRIP' 
+      : (legsCount === 1 
+          ? 'ONEWAY' 
+          : (data?.bookingInfo?.searchType || 'ONEWAY'))
+
     // Build transformed response
     const transformed: any = {
       bookingInfo: {
         bookingId: data?.bookingInfo?.bookingId || data?.nexusBookingData?.priceId || '',
         status: data?.bookingInfo?.status || 'SUCCESS',
         isDomestic: data?.bookingInfo?.isDomestic ?? true,
-        searchType: data?.bookingInfo?.searchType || data?.nexusBookingData?.query?.legs?.length > 1 ? 'ROUNDTRIP' : 'ONEWAY',
+        searchType: searchType,
         cabinClass: fare?.cabinClass || data?.bookingInfo?.cabinClass || 'Economy',
       },
       flightDetails: {
