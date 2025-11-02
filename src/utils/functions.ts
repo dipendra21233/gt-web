@@ -580,3 +580,6 @@ export function generateAgentReference(): string {
   
   return `GT${randomNumber}`;
 }
+export function clearFlightSearchResults() {
+  localStorage.removeItem('flightSearchResults');
+}

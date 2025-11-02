@@ -35,6 +35,7 @@ import { useMutation } from '@tanstack/react-query'
 import { attachSupplierToLocalResults, transformNexusResponseToLocalFormat } from '@/serializer/flightSearch.serializer'
 import { AxiosError } from 'axios'
 import { FlightPriceRequest } from '@/types/module/fareSummarModule'
+import { clearFlightSearchResults } from '@/utils/functions'
 
 export function useInitiateDepositMutation() {
   return useMutation({
@@ -397,6 +398,7 @@ export function useFlightBookingApiMutation() {
     },
     onSuccess: (data) => {
       if (data?.data?.bookingId) {
+        clearFlightSearchResults();
         window.location.href = data?.data?.redirectUrl
       }
     },
@@ -415,7 +417,7 @@ export function useNexusFlightBookingApiMutation() {
       return updateFlightBookingNexusApi(payload)
     },
     onSuccess: (data) => {
-      // Try to get redirectUrl from common response shapes
+      clearFlightSearchResults();
       const redirectUrl = data?.data?.data?.redirectUrl || data?.data?.redirectUrl || (data as any)?.redirectUrl;
       if (redirectUrl && typeof window !== 'undefined') {
         window.location.assign(redirectUrl);

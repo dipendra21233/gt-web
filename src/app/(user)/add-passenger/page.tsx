@@ -395,7 +395,7 @@ function AddPassangerForm() {
           const bookingPayload = createFlightBookingPayload(data, { bookingId, flightDetails: details });
           console.log("Flight booking payload:", bookingPayload);
 
-          flightBookingMutation.mutate(bookingPayload, {
+          flightBookingMutation?.mutate(bookingPayload, {
             onSuccess: (response) => {
               console.log("Flight booking successful:", response);
               // Try to get redirectUrl from common response shapes
