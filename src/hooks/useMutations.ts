@@ -9,8 +9,10 @@ import {
   initiateDepositApi,
   loginApi,
   resendOtpApi,
+  setAiriqFlightSearchRequestApi,
   setFlightSearchRequestApi,
   setNexusFlightSearchRequestApi,
+  updateFlightBookingAiriqApi,
   updateFlightBookingApi,
   updateFlightBookingNexusApi,
   updatePaymentStatusApi,
@@ -32,7 +34,7 @@ import { FlightBookingPayload } from '@/types/module/flightBooking'
 import { SearchQueryPayload } from '@/types/module/flightSearch'
 import { UploadBalanceDataProps } from '@/types/module/paymentMethods'
 import { useMutation } from '@tanstack/react-query'
-import { attachSupplierToLocalResults, transformNexusResponseToLocalFormat } from '@/serializer/flightSearch.serializer'
+import { attachSupplierToLocalResults, transformNexusResponseToLocalFormat, transformAiriqResponseToLocalFormat } from '@/serializer/flightSearch.serializer'
 import { AxiosError } from 'axios'
 import { FlightPriceRequest } from '@/types/module/fareSummarModule'
 import { clearFlightSearchResults } from '@/utils/functions'
@@ -128,8 +130,11 @@ export function useSequentialFlightSearchMutation() {
   const nexusFlightSearchMutation = useNexusFlightSearchRequestMutation()
 
   const mutateSequentially = async (payload: SearchQueryPayload): Promise<any> => {
+    const allResults: any[] = []
+    const supplierResults: Record<string, any> = {}
+    
     try {
-      // First API call with full payload (including searchModifiers)
+      // Step 1: First API call with full payload (including searchModifiers)
       const firstResponse = await flightSearchMutation.mutateAsync(payload)
       
       // Extract supplier from the first API response
@@ -177,165 +182,92 @@ export function useSequentialFlightSearchMutation() {
       }
       
       const tripjackSupplier = extractSupplierFromResponse(firstResponse?.data)
-      
-      // Transform Nexus response to match the localStorage FlightSearchResult format
-      const transformNexusResponse = (nexusData: any) => {
-        const normalizeIsoMinute = (iso: string | null | undefined) => {
-          if (!iso || typeof iso !== 'string') return ''
-          // Ensure format YYYY-MM-DDTHH:mm (strip seconds if present)
-          const [datePart, timePart] = iso.split('T')
-          if (!timePart) return iso
-          const [hh = '', mm = ''] = timePart.split(':')
-          return `${datePart}T${hh}:${mm}`
+      const tripjackResults = attachSupplierToLocalResults(firstResponse?.data, tripjackSupplier)
+      allResults.push(...tripjackResults)
+      supplierResults.tripjack = firstResponse
+
+      // Step 2: Nexus API call (without searchModifiers)
+      try {
+        const nexusPayload: SearchQueryPayload = {
+          searchQuery: {
+            cabinClass: payload.searchQuery.cabinClass,
+            paxInfo: payload.searchQuery.paxInfo,
+            routeInfos: payload.searchQuery.routeInfos
+            // Note: searchModifiers are excluded for Nexus API
+          }
         }
 
-        const fromSegmentsShape = (items: any[]) => {
-          return items.map((item: any) => {
-            const seg = Array.isArray(item?.segments) && item.segments.length > 0 ? item.segments[0] : {}
-            const fares = Array.isArray(item?.fares) ? item.fares : []
+        const nexusResponse = await nexusFlightSearchMutation.mutateAsync(nexusPayload)
+        const transformedNexusResults = transformNexusResponseToLocalFormat(nexusResponse)
+        allResults.push(...transformedNexusResults)
+        supplierResults.nexus = nexusResponse
+      } catch (nexusError) {
+        console.error('Nexus API failed:', nexusError)
+        // Continue with other APIs even if Nexus fails
+      }
 
-            const mappedSegment = {
-              flightCode: seg?.flightCode || seg?.flightNumber || '',
-              airlineName: seg?.airlineName || seg?.carrierName || '',
-              airlineCode: seg?.airlineCode || (seg?.flightCode ? String(seg.flightCode).slice(0, 2) : ''),
-              from: seg?.from || seg?.src || '',
-              fromCity: seg?.fromCity || seg?.srcCity || seg?.from || '',
-              fromTerminal: seg?.fromTerminal ?? '',
-              to: seg?.to || seg?.dst || '',
-              toCity: seg?.toCity || seg?.dstCity || seg?.to || '',
-              toTerminal: seg?.toTerminal ?? '',
-              departureTime: normalizeIsoMinute(seg?.departureTime || seg?.depTime || ''),
-              arrivalTime: normalizeIsoMinute(seg?.arrivalTime || seg?.arrTime || ''),
-              duration: typeof seg?.duration === 'number'
-                ? seg.duration
-                : (typeof seg?.duration === 'string' ? parseInt(String(seg.duration).replace(/[^\d]/g, '')) || 0 : 0),
-              stops: typeof seg?.stops === 'number' ? seg.stops : 0,
-            }
+      // Step 3: AirIQ API call (with full payload including searchModifiers)
+      try {
+        // Call AirIQ API directly using the API function to avoid mutation's onSuccess redirect callback
+        const airiqResponse = await setAiriqFlightSearchRequestApi(payload)
+        console.log('AirIQ API Response:', airiqResponse?.data)
+        const transformedAiriqResults = transformAiriqResponseToLocalFormat(airiqResponse)
+        console.log('Transformed AirIQ Results:', transformedAiriqResults)
+        allResults.push(...transformedAiriqResults)
+        supplierResults.airiq = airiqResponse
+      } catch (airiqError) {
+        console.error('AirIQ API failed:', airiqError)
+        // Continue even if AirIQ fails
+      }
 
-            const mappedFares = fares.map((f: any) => ({
-              fareIdentifier: f?.fareIdentifier || f?.brand || f?.brandName || '',
-              totalFare: typeof f?.totalFare === 'number' ? f.totalFare : Number(f?.totalFare) || 0,
-              baseFare: typeof f?.baseFare === 'number' ? f.baseFare : Number(f?.baseFare) || 0,
-              taxes: typeof f?.taxes === 'number' ? f.taxes : Number(f?.taxes) || 0,
-              baggage: {
-                checkIn: f?.baggage?.checkIn || f?.checkInBaggage || '15 KG',
-                cabin: f?.baggage?.cabin || f?.cabinBaggage || '7 KG',
-              },
-              cabinClass: (f?.cabinClass || f?.cabin || 'ECONOMY').toString().toUpperCase(),
-              fareBasis: f?.fareBasis || f?.fareClass || '',
-              meal: f?.meal || 'Paid',
-              benefit: f?.benefit ?? null,
-              consentMsg: f?.consentMsg ?? null,
-              refundType: f?.refundType || 'Non-Refundable',
-              bookingCode: f?.bookingCode || '',
-              priceID: f?.priceID || f?.priceId || '',
-            }))
+      // Determine primary supplier to store (prefer supplier with results)
+      const supplierToStore = 
+        supplierResults.airiq && allResults.some((r: any) => r?.supplier === 'AIRIQ') ? 'AIRIQ' :
+        supplierResults.nexus && allResults.some((r: any) => r?.supplier === 'NEXUS') ? 'NEXUS' :
+        tripjackSupplier
 
-            return {
-              segments: [mappedSegment],
-              fares: mappedFares,
+      // Store all combined results in localStorage
+      if (typeof window !== 'undefined') {
+        // Verify priceID is present in AirIQ results before storing
+        const airiqResults = allResults.filter((r: any) => r?.supplier === 'AIRIQ')
+        if (airiqResults.length > 0) {
+          console.log('AirIQ Results to be stored:', airiqResults)
+          airiqResults.forEach((result: any, index: number) => {
+            if (result?.fares && Array.isArray(result.fares)) {
+              result.fares.forEach((fare: any, fareIndex: number) => {
+                if (!fare?.priceID) {
+                  console.warn(`AirIQ Result ${index}, Fare ${fareIndex} missing priceID:`, fare)
+                } else {
+                  console.log(`AirIQ Result ${index}, Fare ${fareIndex} priceID:`, fare.priceID)
+                }
+              })
             }
           })
         }
-
-        try {
-          // Case 1: Nexus returns an array of items with segments/fares
-          if (Array.isArray(nexusData?.data)) {
-            return fromSegmentsShape(nexusData.data)
-          }
-
-          // Case 2: Nexus wraps results inside data.results
-          if (Array.isArray(nexusData?.data?.results)) {
-            return fromSegmentsShape(nexusData.data.results)
-          }
-
-          // Case 3: Fallback to legacy searchResult.tripInfos shape
-          if (Array.isArray(nexusData?.data?.searchResult?.tripInfos)) {
-            return nexusData.data.searchResult.tripInfos.map((trip: any) => ({
-              segments: [{
-                flightCode: trip?.flightCode || '',
-                airlineName: trip?.airlineName || '',
-                airlineCode: trip?.airlineCode || (trip?.flightCode ? String(trip.flightCode).slice(0, 2) : ''),
-                from: trip?.from || '',
-                fromCity: trip?.fromCity || trip?.from || '',
-                fromTerminal: trip?.fromTerminal ?? '',
-                to: trip?.to || '',
-                toCity: trip?.toCity || trip?.to || '',
-                toTerminal: trip?.toTerminal ?? '',
-                departureTime: normalizeIsoMinute(trip?.departureTime || ''),
-                arrivalTime: normalizeIsoMinute(trip?.arrivalTime || ''),
-                duration: typeof trip?.duration === 'number'
-                  ? trip.duration
-                  : (typeof trip?.duration === 'string' ? parseInt(String(trip.duration).replace(/[^\d]/g, '')) || 0 : 0),
-                stops: typeof trip?.stops === 'number' ? trip.stops : 0,
-              }],
-              fares: [{
-                fareIdentifier: `${trip?.flightCode || ''}_${trip?.from || ''}_${trip?.to || ''}`,
-                totalFare: Number(trip?.price) || 0,
-                baseFare: Math.round((Number(trip?.price) || 0) * 0.8),
-                taxes: Math.round((Number(trip?.price) || 0) * 0.2),
-                baggage: { checkIn: '15 KG', cabin: '7 KG' },
-                cabinClass: 'ECONOMY',
-                fareBasis: 'Y',
-                meal: 'Paid',
-                benefit: null,
-                consentMsg: null,
-                refundType: 'Non-Refundable',
-                bookingCode: 'Y',
-                priceID: `${trip?.flightCode || 'NEX'}_${Date.now()}`,
-              }],
-            }))
-          }
-        } catch (e) {
-          console.error('Failed to transform Nexus response', e)
-        }
-
-        return []
-      }
-
-      // Create Nexus-specific payload without searchModifiers
-      const nexusPayload: SearchQueryPayload = {
-        searchQuery: {
-          cabinClass: payload.searchQuery.cabinClass,
-          paxInfo: payload.searchQuery.paxInfo,
-          routeInfos: payload.searchQuery.routeInfos
-          // Note: searchModifiers are excluded for Nexus API
-        }
-      }
-
-      // Second API call with Nexus-specific payload
-      const secondResponse = await nexusFlightSearchMutation.mutateAsync(nexusPayload)
-      
-      // Transform and combine results
-      const tripjackResults = attachSupplierToLocalResults(firstResponse?.data, tripjackSupplier)
-      const transformedNexusResults = transformNexusResponseToLocalFormat(secondResponse)
-      const combinedResults = [
-        ...tripjackResults,
-        ...transformedNexusResults
-      ]
-
-      // Determine which supplier to store (prefer the one with results, or TRIPJACK if both empty)
-      const supplierToStore = transformedNexusResults.length > 0 ? 'NEXUS' : tripjackSupplier
-
-      // Store combined results in localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('flightSearchResults', JSON.stringify(combinedResults))
+        
+        localStorage.setItem('flightSearchResults', JSON.stringify(allResults))
         localStorage.setItem('supplier', supplierToStore)
+        
+        // Verify storage was successful
+        const stored = localStorage.getItem('flightSearchResults')
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          const storedAiriq = parsed.filter((r: any) => r?.supplier === 'AIRIQ')
+          console.log('Stored AirIQ Results:', storedAiriq)
+        }
       }
 
       return {
         ...firstResponse,
-        data: combinedResults,
-        nexusData: secondResponse
+        data: allResults,
+        status: firstResponse?.status || 200,
+        nexusData: supplierResults.nexus,
+        airiqData: supplierResults.airiq,
       }
     } catch (error) {
       // If first API fails, throw the error
-      if (error === flightSearchMutation.error) {
-        throw error
-      }
-      // If second API fails, still return first response but log the error
-      console.error('Nexus API failed:', error)
-      return flightSearchMutation.data
+      console.error('Sequential flight search error:', error)
+      throw error
     }
   }
 
@@ -421,6 +353,27 @@ export function useNexusFlightBookingApiMutation() {
       const redirectUrl = data?.data?.data?.redirectUrl || data?.data?.redirectUrl || (data as any)?.redirectUrl;
       if (redirectUrl && typeof window !== 'undefined') {
         window.location.assign(redirectUrl);
+      }
+    },
+    onError(error: AxiosError<AxiosErrorResponse>) {
+      if (error.response) {
+        const errorMessage = error.response?.data?.message
+        showErrorToast(errorMessage)
+      }
+    },
+  })
+}
+
+export function useAiriqFlightSearchRequestMutation() {
+  return useMutation({
+    mutationKey: ['AiriqFlightSearchRequest'],
+    mutationFn: async (payload: SearchQueryPayload) => {
+      return setAiriqFlightSearchRequestApi(payload)
+    },
+    onSuccess: (data) => {
+      clearFlightSearchResults();
+      if (data?.data?.data?.redirectUrl || data?.data?.redirectUrl || (data as any)?.redirectUrl) {
+        window.location.assign(data?.data?.data?.redirectUrl || data?.data?.redirectUrl || (data as any)?.redirectUrl);
       }
     },
     onError(error: AxiosError<AxiosErrorResponse>) {

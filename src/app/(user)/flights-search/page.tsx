@@ -12,6 +12,7 @@ import { clearAllFilters, setUserInfo } from "@/store/slice/flight.slice"
 import { Fare, FlightListingDataProps } from "@/types/module/flightSearch"
 import { MainStoreType } from "@/types/store/reducers/main.reducers"
 import { FlightSearchResult, getFlightSearchResults } from "@/utils/flightStorageUtils"
+import { LocalStorageFlightSearchItem } from "@/serializer/flightSearch.serializer"
 import { applyMultipleFilters, convertToDateObject } from "@/utils/functions"
 import { useSearchParams } from 'next/navigation'
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -199,76 +200,82 @@ function FlightResult() {
   }
 
   // Transform localStorage data to match FlightListingDataProps format
-  const transformLocalStorageData = useCallback((storedData: FlightSearchResult[]): FlightListingDataProps[] => {
-    return storedData.map((flight) => ({
-      segments: flight.segments.map(segment => ({
-        ...segment,
-        toTerminal: segment.fromTerminal, // Assuming same terminal structure
-        seatsAvailable: Math.floor(Math.random() * 9) + 1, // Random seats for demo
-      })),
-      fares: flight.fares.map(fare => ({
-        ...fare,
-        seatsAvailable: Math.floor(Math.random() * 9) + 1, // Random seats for demo
-      })),
-      filterKeys: {
-        // Time-based filters
-        timeCategory: (() => {
-          const hour = new Date(flight.segments[0].departureTime).getHours()
-          if (hour >= 5 && hour < 8) return 'early_morning'
-          if (hour >= 8 && hour < 12) return 'morning'
-          if (hour >= 12 && hour < 18) return 'mid_day'
-          return 'night'
-        })(),
-        departureHour: new Date(flight.segments[0].departureTime).getHours(),
+  const transformLocalStorageData = useCallback((storedData: (FlightSearchResult | LocalStorageFlightSearchItem)[]): (FlightListingDataProps & { supplier?: string })[] => {
+    return storedData.map((flight) => {
+      const flightItem = flight as LocalStorageFlightSearchItem | FlightSearchResult
+      return {
+        segments: flightItem.segments.map((segment: any) => ({
+          ...segment,
+          toTerminal: (segment.toTerminal ?? segment.fromTerminal ?? '') as string,
+          fromTerminal: (segment.fromTerminal ?? '') as string,
+          seatsAvailable: Math.floor(Math.random() * 9) + 1, // Random seats for demo
+        })),
+        fares: flightItem.fares.map((fare: any) => ({
+          ...fare,
+          seatsAvailable: Math.floor(Math.random() * 9) + 1, // Random seats for demo
+        })),
+        // Preserve supplier from LocalStorageFlightSearchItem if available
+        supplier: 'supplier' in flightItem ? flightItem.supplier : undefined,
+        filterKeys: {
+          // Time-based filters
+          timeCategory: (() => {
+            const hour = new Date(flightItem.segments[0].departureTime).getHours()
+            if (hour >= 5 && hour < 8) return 'early_morning'
+            if (hour >= 8 && hour < 12) return 'morning'
+            if (hour >= 12 && hour < 18) return 'mid_day'
+            return 'night'
+          })(),
+          departureHour: new Date(flightItem.segments[0].departureTime).getHours(),
 
-        // Stops-based filters
-        stopsCategory: flight.segments[0].stops === 0 ? 'non_stop' :
-          flight.segments[0].stops === 1 ? 'one_stop' : 'multiple_stops',
-        stopsCount: flight.segments[0].stops,
+          // Stops-based filters
+          stopsCategory: flightItem.segments[0].stops === 0 ? 'non_stop' :
+            flightItem.segments[0].stops === 1 ? 'one_stop' : 'multiple_stops',
+          stopsCount: flightItem.segments[0].stops,
 
-        // Fare-based filters
-        fareTypeCategory: flight.fares[0].fareIdentifier,
-        isRefundable: flight.fares[0].refundType === 'Refundable',
+          // Fare-based filters
+          fareTypeCategory: flightItem.fares[0].fareIdentifier,
+          isRefundable: flightItem.fares[0].refundType === 'Refundable',
 
-        // Price-based filters
-        totalFare: flight.fares[0].totalFare,
-        baseFare: flight.fares[0].baseFare,
-        taxes: flight.fares[0].taxes,
+          // Price-based filters
+          totalFare: flightItem.fares[0].totalFare,
+          baseFare: flightItem.fares[0].baseFare,
+          taxes: flightItem.fares[0].taxes,
 
-        // Duration-based filters
-        totalDurationMinutes: flight.segments[0].duration,
-        durationCategory: flight.segments[0].duration < 120 ? 'short' :
-          flight.segments[0].duration < 300 ? 'medium' : 'long',
+          // Duration-based filters
+          totalDurationMinutes: flightItem.segments[0].duration,
+          durationCategory: flightItem.segments[0].duration < 120 ? 'short' :
+            flightItem.segments[0].duration < 300 ? 'medium' : 'long',
 
-        // Airline-based filters
-        airlineName: flight.segments[0].airlineName,
-        airlineCode: flight.segments[0].airlineCode,
+          // Airline-based filters
+          airlineName: flightItem.segments[0].airlineName,
+          airlineCode: flightItem.segments[0].airlineCode,
 
-        // Route-based filters
-        fromAirport: flight.segments[0].from,
-        toAirport: flight.segments[0].to,
-        fromCity: flight.segments[0].fromCity,
-        toCity: flight.segments[0].toCity,
+          // Route-based filters
+          fromAirport: flightItem.segments[0].from,
+          toAirport: flightItem.segments[0].to,
+          fromCity: flightItem.segments[0].fromCity,
+          toCity: flightItem.segments[0].toCity,
 
-        // Availability filters
-        seatsAvailable: Math.floor(Math.random() * 9) + 1,
-        hasAvailableSeats: true,
+          // Availability filters
+          seatsAvailable: Math.floor(Math.random() * 9) + 1,
+          hasAvailableSeats: true,
 
-        // Cabin class filters
-        cabinClass: flight.fares[0].cabinClass,
+          // Cabin class filters
+          cabinClass: flightItem.fares[0].cabinClass,
 
-        // Baggage filters
-        hasBaggage: true,
+          // Baggage filters
+          hasBaggage: true,
 
-        // Meal filters
-        hasMeal: flight.fares[0].meal !== 'Paid',
+          // Meal filters
+          hasMeal: flightItem.fares[0].meal !== 'Paid',
 
-        // Combined filters
-        isDirectFlight: flight.segments[0].stops === 0,
-        isConnectingFlight: flight.segments[0].stops > 0,
-        isLowCostCarrier: flight.segments[0].airlineCode === '6E' || flight.segments[0].airlineCode === 'SG',
+          // Combined filters
+          isDirectFlight: flightItem.segments[0].stops === 0,
+          isConnectingFlight: flightItem.segments[0].stops > 0,
+          isLowCostCarrier: flightItem.segments[0].airlineCode === '6E' || flightItem.segments[0].airlineCode === 'SG',
+        }
       }
-    }))
+    })
   }, [])
 
   // Load data from localStorage on component mount

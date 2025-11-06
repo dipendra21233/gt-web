@@ -150,6 +150,14 @@ export const setNexusFlightSearchRequestApi = (
     data
   )
 }
+export const setAiriqFlightSearchRequestApi = (
+  data: SearchQueryPayload
+): Promise<AxiosResponse> => {
+  return NetworkClient.post(
+    `${process.env.NEXT_PUBLIC_API_URL}api/v1/airiq/search-flights`,
+    data
+  )
+}
 
 export const getBookingsDataApi = (
   data: MyBookingsRequestData,
@@ -348,6 +356,15 @@ export const updateFlightBookingNexusApi = (
 ): Promise<AxiosResponse> => {
   return NetworkClient.post(
     `${process.env.NEXT_PUBLIC_API_URL}api/v1/nexus/flights/confirm-flight-booking`,
+    data
+  )
+}
+
+export const updateFlightBookingAiriqApi = (
+  data: FlightBookingPayload
+): Promise<AxiosResponse> => {
+  return NetworkClient.post(
+    `${process.env.NEXT_PUBLIC_API_URL}api/v1/airiq/search-flights`,
     data
   )
 }

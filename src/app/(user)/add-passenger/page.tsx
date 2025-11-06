@@ -18,7 +18,8 @@ import { usePassengerForm } from "@/hooks/usePassengerForm";
 import { flightBookingRequest } from "@/store/actions/flightBooking.action";
 import { getPassengerFareSummary } from "@/store/actions/passangerFareSummary.action";
 import { setPassengerFareSummary, setPassengerFareSummaryLoading, stopPassengerFareSummaryLoading } from "@/store/slice/passangerFareSummary.slice";
-import { transformNexusFareSummaryResponse } from "@/serializer/flightSearch.serializer";
+import { transformNexusFareSummaryResponse, transformAiriqFlightDataToPayload } from "@/serializer/flightSearch.serializer";
+import { getSelectedAiriqFlight } from "@/utils/flightStorageUtils";
 import { FlightPriceRequest } from "@/types/module/fareSummarModule";
 import { RootState } from "@/store/store";
 import { FlightBookingPayload } from "@/types/module/flightBooking";
@@ -328,9 +329,10 @@ function AddPassangerForm() {
       
       // Get supplier from passengerFareSummary
       const supplier = passengerFareSummary?.supplier;
+      console.log('check331 supplier', supplier);
       
       // Determine supplier from localStorage if not in passengerFareSummary
-      let determinedSupplier: 'NEXUS' | 'TRIPJACK' = supplier || 'TRIPJACK';
+      let determinedSupplier: 'NEXUS' | 'TRIPJACK' | 'AIRIQ' = supplier || 'TRIPJACK';
       if (!supplier && typeof window !== 'undefined') {
         try {
           const ids = priceIds ? priceIds.split(',') : [];
@@ -338,7 +340,7 @@ function AddPassangerForm() {
           const raw = localStorage.getItem('flightSearchResults');
           if (raw) {
             const results = JSON.parse(raw) as Array<{ 
-              supplier?: 'NEXUS' | 'TRIPJACK'; 
+              supplier?: 'NEXUS' | 'TRIPJACK' | 'AIRIQ'; 
               fares?: Array<{ priceID?: string; priceId?: string }> 
             }>;
             const found = results.find((r) => 
@@ -349,8 +351,8 @@ function AddPassangerForm() {
               determinedSupplier = found.supplier;
             } else {
               const lsSupplier = localStorage.getItem('supplier');
-              if (lsSupplier === 'NEXUS' || lsSupplier === 'TRIPJACK') {
-                determinedSupplier = lsSupplier;
+              if (lsSupplier === 'NEXUS' || lsSupplier === 'TRIPJACK' || lsSupplier === 'AIRIQ') {
+                determinedSupplier = lsSupplier as 'NEXUS' | 'TRIPJACK' | 'AIRIQ';
               }
             }
           }
@@ -423,23 +425,37 @@ function AddPassangerForm() {
   useEffect(() => {
     if (!priceIds) return;
 
-    // Determine supplier by matching priceId in localStorage flightSearchResults
+    // Determine supplier by matching priceId in localStorage flightSearchResults or checking AirIQ data
     const ids = priceIds.split(',');
     const firstId = ids[0];
-    let supplier: 'NEXUS' | 'TRIPJACK' | undefined;
+    let supplier: 'NEXUS' | 'TRIPJACK' | 'AIRIQ' | undefined;
+    
+    // First check if AirIQ flight data exists in localStorage
     try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('flightSearchResults') : null;
-      if (raw) {
-        const results = JSON.parse(raw) as Array<{ supplier?: 'NEXUS' | 'TRIPJACK'; fares?: Array<{ priceID?: string; priceId?: string }> }>;
-        const found = results.find((r) => Array.isArray(r?.fares) && r.fares.some((f: any) => (f?.priceID || f?.priceId) === firstId));
-        supplier = (found as any)?.supplier;
-      }
-      if (!supplier && typeof window !== 'undefined') {
-        const lsSupplier = localStorage.getItem('supplier');
-        if (lsSupplier === 'NEXUS' || lsSupplier === 'TRIPJACK') supplier = lsSupplier;
+      const airiqData = getSelectedAiriqFlight();
+      if (airiqData && airiqData.selectedFare?.priceID === firstId) {
+        supplier = 'AIRIQ';
       }
     } catch (e) {
-      // fallback to default flow
+      // Continue with other checks
+    }
+    
+    // If not AIRIQ, check flightSearchResults
+    if (!supplier) {
+      try {
+        const raw = typeof window !== 'undefined' ? localStorage.getItem('flightSearchResults') : null;
+        if (raw) {
+          const results = JSON.parse(raw) as Array<{ supplier?: 'NEXUS' | 'TRIPJACK' | 'AIRIQ'; fares?: Array<{ priceID?: string; priceId?: string }> }>;
+          const found = results.find((r) => Array.isArray(r?.fares) && r.fares.some((f: any) => (f?.priceID || f?.priceId) === firstId));
+          supplier = (found as any)?.supplier;
+        }
+        if (!supplier && typeof window !== 'undefined') {
+          const lsSupplier = localStorage.getItem('supplier');
+          if (lsSupplier === 'NEXUS' || lsSupplier === 'TRIPJACK' || lsSupplier === 'AIRIQ') supplier = lsSupplier as 'NEXUS' | 'TRIPJACK' | 'AIRIQ';
+        }
+      } catch (e) {
+        // fallback to default flow
+      }
     }
 
     const fetchKey = `${supplier || 'TRIPJACK'}|${ids.join(',')}`;
@@ -507,7 +523,31 @@ function AddPassangerForm() {
           dispatch(stopPassengerFareSummaryLoading('passengerFareSummary/getPassengerFareSummary'));
         }
       });
+    } else if (supplier === 'AIRIQ') {
+      // For AIRIQ, use data from selectedAiriqFlightData localStorage
+      try {
+        dispatch(setPassengerFareSummaryLoading('passengerFareSummary/getPassengerFareSummary'));
+        
+        const airiqData = getSelectedAiriqFlight();
+        if (airiqData) {
+          const transformed = transformAiriqFlightDataToPayload(airiqData, ids);
+          if (transformed) {
+            dispatch(setPassengerFareSummary(transformed));
+            fetchedKeyRef.current = fetchKey;
+          } else {
+            console.error('Failed to transform AirIQ flight data');
+          }
+        } else {
+          console.error('AirIQ flight data not found in localStorage');
+        }
+        
+        dispatch(stopPassengerFareSummaryLoading('passengerFareSummary/getPassengerFareSummary'));
+      } catch (error) {
+        console.error('Error processing AirIQ flight data:', error);
+        dispatch(stopPassengerFareSummaryLoading('passengerFareSummary/getPassengerFareSummary'));
+      }
     } else {
+      // For TRIPJACK, call the API
       // Pass the split array of priceIds, not the comma-separated string
       dispatch(getPassengerFareSummary(ids, () => {}));
       fetchedKeyRef.current = fetchKey;

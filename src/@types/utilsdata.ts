@@ -117,7 +117,7 @@ declare module 'utilsdata' {
           totalAmount: number;
         };
         
-        supplier?: 'NEXUS' | 'TRIPJACK';
+        supplier?: 'NEXUS' | 'TRIPJACK' | 'AIRIQ';
       }
       
       export interface FareDetails {

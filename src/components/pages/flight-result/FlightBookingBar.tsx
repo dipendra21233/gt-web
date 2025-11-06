@@ -11,6 +11,7 @@ import { Box, Text } from "theme-ui";
 import { FlightFareDetails } from "./FlightFareDetails";
 import { FareCheckboxContainer } from "./FlightFares";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { storeSelectedAiriqFlight } from "@/utils/flightStorageUtils";
 
 const DEFAULT_THEME = {
   GRADIENT: "",
@@ -194,9 +195,28 @@ export const FlightBookingBar = ({
                   <ThemeButton
                     variant="darkSlate"
                     onClick={async () => {
+                      console.log('check197 selectedFare', selectedFare);
                       if (selectedFare?.priceID && !isBooking) {
                         setIsBooking(true);
                         try {
+                          // Check if supplier is AIRIQ
+                          const supplier = (flightData as any)?.supplier;
+                           console.log('check204 supplier', supplier);
+                           
+                          if (supplier === 'AIRIQ') {
+                            // Store complete AirIQ flight data in localStorage
+                            const airiqFlightData = {
+                              supplier: 'AIRIQ',
+                              segments: flightData.segments,
+                              fares: flightData.fares,
+                              selectedFare: selectedFare,
+                              timestamp: new Date().toISOString(),
+                            };
+                            
+                            storeSelectedAiriqFlight(airiqFlightData);
+                            console.log('AirIQ flight data stored:', airiqFlightData);
+                          }
+                          
                           await router.push(`/add-passenger?priceIds=${selectedFare.priceID}`);
                         } catch (error) {
                           console.error('Navigation error:', error);

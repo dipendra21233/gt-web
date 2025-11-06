@@ -59,6 +59,7 @@ export interface FlightSearchResult {
 
 const FLIGHT_SEARCH_RESULTS_KEY = 'flightSearchResults'
 const FLIGHT_LISTING_DATA_KEY = 'flightListingData'
+const SELECTED_AIRIQ_FLIGHT_KEY = 'selectedAiriqFlightData'
 
 /**
  * Store flight search results in localStorage
@@ -168,5 +169,52 @@ export const hasFlightSearchResults = (): boolean => {
   } catch (error) {
     console.error('Error checking flight search results:', error)
     return false
+  }
+}
+
+/**
+ * Store selected AirIQ flight data in localStorage
+ * @param data - Complete AirIQ flight data including segments, fares, and supplier
+ */
+export const storeSelectedAiriqFlight = (data: any): void => {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(SELECTED_AIRIQ_FLIGHT_KEY, JSON.stringify(data))
+      console.log('Selected AirIQ flight data stored successfully')
+    }
+  } catch (error) {
+    console.error('Error storing selected AirIQ flight data:', error)
+    throw error
+  }
+}
+
+/**
+ * Retrieve selected AirIQ flight data from localStorage
+ * @returns Selected AirIQ flight data or null if not found
+ */
+export const getSelectedAiriqFlight = (): any | null => {
+  try {
+    if (typeof window !== 'undefined') {
+      const data = localStorage.getItem(SELECTED_AIRIQ_FLIGHT_KEY)
+      return data ? JSON.parse(data) : null
+    }
+    return null
+  } catch (error) {
+    console.error('Error retrieving selected AirIQ flight data:', error)
+    return null
+  }
+}
+
+/**
+ * Clear selected AirIQ flight data from localStorage
+ */
+export const clearSelectedAiriqFlight = (): void => {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(SELECTED_AIRIQ_FLIGHT_KEY)
+      console.log('Selected AirIQ flight data cleared')
+    }
+  } catch (error) {
+    console.error('Error clearing selected AirIQ flight data:', error)
   }
 }
