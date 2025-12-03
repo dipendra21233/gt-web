@@ -6,6 +6,7 @@ import { appRoutes } from '@/utils/routes'
 import { translation } from '@/utils/translation'
 import {
   BarChart3,
+  Calendar,
   ChevronRight,
   CreditCard,
   Menu,
@@ -100,6 +101,12 @@ export const ModernSidebar = memo(() => {
           title: translation?.LEDGER || 'Ledger',
           path: appRoutes?.ledgerManagement || '/admin/ledger',
           icon: <Receipt className="w-4 h-4" />,
+          isMultiOption: false,
+        },
+        {
+          title: translation?.PAX_CALENDAR,
+          path: appRoutes?.paxCalendar,
+          icon: <Calendar className="w-4 h-4" />,
           isMultiOption: false,
         },
       ],

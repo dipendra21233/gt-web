@@ -7,6 +7,7 @@ import '@/styles/admin/global.css';
 import '@/styles/admin/index.css';
 import '@/styles/commonMarginPadding.css';
 import '@/styles/flex-class.css';
+import '@/styles/pax.css';
 import { ACCESS_TOKEN } from '@/utils/constant';
 import Cookies from 'js-cookie';
 import dynamic from 'next/dynamic';

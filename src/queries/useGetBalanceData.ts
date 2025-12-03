@@ -8,6 +8,8 @@ import { useAuthData } from './useAuthData'
 export const useGetBalanceData = () => {
   const { authUser } = useAuthData()
   const token = Cookies.get(ACCESS_TOKEN)
+  const userId = authUser?._id
+  
   const {
     data: balanceData,
     isLoading,
@@ -16,13 +18,21 @@ export const useGetBalanceData = () => {
     isError,
     isFetching,
   } = useQuery({
-    queryKey: ['balanceData', authUser?._id],
-    queryFn: () => getBalanceDataApi({ userId: authUser?._id }),
+    queryKey: ['balanceData', userId],
+    queryFn: () => {
+      if (!userId || userId === 'undefined' || userId === 'null') {
+        throw new Error('User ID is not available')
+      }
+      return getBalanceDataApi({ userId })
+    },
     enabled:
       !!token &&
       token !== 'undefined' &&
       token !== 'null' &&
-      authUser?._id !== undefined,
+      !!userId &&
+      userId !== 'undefined' &&
+      userId !== 'null' &&
+      typeof userId === 'string',
     retry: false,
   })
 

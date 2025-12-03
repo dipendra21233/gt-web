@@ -166,6 +166,7 @@ export const translation: translation_Props = {
   CLASS: 'Class',
   SEARCH_AGAIN: 'Search Again',
   CLOSE: 'Close',
+  PAX_CALENDAR: 'Pax Calendar',
 }
 
 export const translationWithFunction: translation_Props_With_Function = {

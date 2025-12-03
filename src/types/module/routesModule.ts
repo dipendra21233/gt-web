@@ -25,6 +25,7 @@ export interface Routes {
   holdQueuesManagement: string
   transactionManagement: string
   uploadBalance: string
+  paxCalendar: string
 }
 
 export interface FlightInfoProps {

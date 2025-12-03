@@ -280,9 +280,15 @@ export const initiateDepositApi = (
 export const getBalanceDataApi = (data?: {
   userId: string
 }): Promise<AxiosResponse> => {
+  // Filter out undefined/null values to prevent "userId=undefined" in URL
+  const filteredParams: Record<string, string> = {}
+  if (data?.userId && data.userId !== 'undefined' && data.userId !== 'null') {
+    filteredParams.userId = data.userId
+  }
+  
   const apiUrl = generateApiUrl(
     `${process.env.NEXT_PUBLIC_API_URL}api/v1/users/balance`,
-    data
+    Object.keys(filteredParams).length > 0 ? filteredParams : undefined
   )
   return NetworkClient.get(apiUrl)
 }
@@ -365,6 +371,28 @@ export const updateFlightBookingAiriqApi = (
 ): Promise<AxiosResponse> => {
   return NetworkClient.post(
     `${process.env.NEXT_PUBLIC_API_URL}api/v1/airiq/search-flights`,
+    data
+  )
+}
+
+export const getPaxCalendarDataApi = (
+  data: {
+    startDate: string
+    endDate: string
+  }
+): Promise<AxiosResponse> => {
+  return NetworkClient.get(
+    `${process.env.NEXT_PUBLIC_API_URL}api/v1/bookings/pax-calendar?startDate=${data.startDate}&endDate=${data.endDate}`,
+  )
+}
+
+export const getItineraryDataApi = (
+  data: {
+    bookingId: string
+  }
+): Promise<AxiosResponse> => {
+  return NetworkClient.post(
+    `${process.env.NEXT_PUBLIC_API_URL}api/v1/bookings/itinerary`,
     data
   )
 }

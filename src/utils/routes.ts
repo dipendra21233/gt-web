@@ -26,4 +26,5 @@ export const appRoutes: Routes = {
   holdQueuesManagement: '/admin/hold-queues',
   transactionManagement: '/admin/transaction-list',
   uploadBalance: '/admin/upload-balance',
+  paxCalendar: '/admin/pax-calendar',
 }

@@ -5,6 +5,8 @@ import {
   forgotPasswordApi,
   getBookingsDataApi,
   getPassengerFareSummaryNexusApi,
+  getPaxCalendarDataApi,
+  getItineraryDataApi,
   getReviewFlightDetailsApi,
   initiateDepositApi,
   loginApi,
@@ -437,6 +439,36 @@ export function useGetPassengerFareSummaryNexusMutation() {
     mutationKey: ['GetPassengerFareSummaryNexus'],
     mutationFn: async (payload: FlightPriceRequest) => {
       return getPassengerFareSummaryNexusApi(payload)
+    },
+    onError(error: AxiosError<AxiosErrorResponse>) {
+      if (error.response) {
+        const errorMessage = error.response?.data?.message
+        showErrorToast(errorMessage)
+      }
+    },
+  })
+}   
+
+  export function useGetPaxCalendarDataMutation() {
+  return useMutation({
+    mutationKey: ['GetPaxCalendarData'],
+    mutationFn: async (payload: { startDate: string, endDate: string }) => {
+      return getPaxCalendarDataApi(payload)
+    },
+    onError(error: AxiosError<AxiosErrorResponse>) {
+      if (error.response) {
+        const errorMessage = error.response?.data?.message
+        showErrorToast(errorMessage)
+      }
+    },
+  })
+}
+
+export function useGetItineraryDataMutation() {
+  return useMutation({
+    mutationKey: ['GetItineraryData'],
+    mutationFn: async (payload: { bookingId: string }) => {
+      return getItineraryDataApi(payload)
     },
     onError(error: AxiosError<AxiosErrorResponse>) {
       if (error.response) {
